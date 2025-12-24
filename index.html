@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Music Quiz & Bingo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        
+        <div id="login-section">
+            <h1>Music Quiz Login</h1>
+            <p>Log in met Spotify Premium om te kunnen spelen.</p>
+            <button id="login-btn" class="btn-spotify">Login met Spotify</button>
+        </div>
+
+        <div id="app-section" class="hidden">
+            
+            <div class="card control-panel">
+                <h2>🎵 DJ Booth</h2>
+                
+                <div class="playlist-selector">
+                    <label for="playlist-select" style="display:block; margin-bottom:5px; color:#aaa;">Kies je playlist:</label>
+                    <select id="playlist-select" style="padding: 10px; border-radius: 5px; width: 100%; font-size: 16px; margin-bottom: 15px;">
+                        <option value="">Lijsten laden...</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button id="shuffle-play-btn" class="btn-primary">🔀 Shuffle & Play</button>
+                </div>
+                
+                <div class="playback-controls">
+                    <button id="prev-btn">⏮</button>
+                    <button id="pause-btn">⏯</button>
+                    <button id="next-btn">⏭</button>
+                </div>
+
+                <div class="reveal-section">
+                    <button id="reveal-btn" class="btn-warning">Toon Antwoord</button>
+                    
+                    <div id="track-info" class="hidden">
+                        <h3 id="track-name">Nummer Titel</h3>
+                        <p id="track-artist">Artiest Naam</p>
+                        <span id="track-year" class="badge">Jaartal</span>
+                        
+                        <div id="spotify-link-container" style="margin-top: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mode-switch">
+                <button onclick="switchMode('classic')" class="active" id="btn-classic">Classic</button>
+                <button onclick="switchMode('bingo')" id="btn-bingo">Bingo</button>
+            </div>
+
+            <div id="mode-classic" class="game-mode">
+                <h3>Spelers Scorebord</h3>
+                <div class="add-player-box">
+                    <input type="text" id="new-player-name" placeholder="Naam speler">
+                    <button onclick="addPlayer()">+ Voeg toe</button>
+                </div>
+                <div id="players-list">
+                    </div>
+            </div>
+
+            <div id="mode-bingo" class="game-mode hidden">
+                <h3>Het Rad</h3>
+                
+                <div class="wheel-container">
+                    <div id="wheel" class="wheel">
+                        <div class="segment seg-green"></div>
+                        <div class="segment seg-pink"></div>
+                        <div class="segment seg-yellow"></div>
+                        <div class="segment seg-purple"></div>
+                        <div class="segment seg-blue"></div>
+                    </div>
+                    <div class="arrow">⬇</div>
+                </div>
+                
+                <button onclick="spinWheel()" class="btn-primary" style="margin-top: 20px;">DRAAIEN!</button>
+                
+                <div id="bingo-result" class="result-box hidden">
+                    <h2 id="bingo-color" style="margin-top:0;">Kleur</h2>
+                    <p><strong>Makkelijk:</strong> <br><span id="q-easy">...</span></p>
+                    <hr style="border: 0; border-top: 1px solid #555;">
+                    <p><strong>Moeilijk:</strong> <br><span id="q-hard">...</span></p>
+                </div>
+
+                <div class="timer-box">
+                    <div id="timer-display">25</div>
+                    <button onclick="startTimer()" style="font-size: 0.6em; padding: 5px 10px;">Start Timer</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
