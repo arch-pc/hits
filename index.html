@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hitster Clone (Secure)</title>
+    
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; 
+                   script-src 'self'; 
+                   connect-src 'self' https://api.spotify.com https://accounts.spotify.com; 
+                   style-src 'self' 'unsafe-inline'; 
+                   img-src 'self' data:;">
+
+    <title>Hitster Clone (Secured)</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,7 +20,7 @@
         
         <div id="login-section">
             <h1>Music Quiz Login</h1>
-            <p>Log in met Spotify Premium (Secure PKCE).</p>
+            <p>Log in met Spotify Premium (Secure PKCE + State).</p>
             <button id="login-btn" class="btn-spotify">Login met Spotify</button>
         </div>
 
