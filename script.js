@@ -89,11 +89,12 @@ async function handleRedirect() {
 // --- APP LOGIC ---
 let accessToken = window.sessionStorage.getItem('access_token');
 let fullLibrary = {};
-let activeGameData = [];
+let shuffledQueue = []; // Hier slaan we de gehusselde lijst op
+let queueIndex = 0;     // Waar zijn we in de lijst?
 let currentTrack = null;
-let isSpinning = false;
 
 window.addEventListener('load', async () => {
+    // (Login check code hierboven laten staan zoals die was...)
     if (window.location.search.includes('code=')) {
         if (await handleRedirect()) {
             accessToken = window.sessionStorage.getItem('access_token');
@@ -106,17 +107,16 @@ window.addEventListener('load', async () => {
     // Listeners
     document.getElementById('login-btn').addEventListener('click', initiateLogin);
     
-    // DJ Controls
-    document.getElementById('shuffle-play-btn').addEventListener('click', playRandomTrack);
-    document.getElementById('prev-btn').addEventListener('click', () => sendSpotifyCommand('previous', 'POST'));
-    document.getElementById('next-btn').addEventListener('click', () => sendSpotifyCommand('next', 'POST'));
-    document.getElementById('pause-btn').addEventListener('click', () => sendSpotifyCommand('pause', 'PUT'));
+    // NIEUWE DJ CONTROLS
+    document.getElementById('btn-next').addEventListener('click', playNextInQueue);
+    document.getElementById('btn-pause').addEventListener('click', () => sendSpotifyCommand('pause', 'PUT')); // Werkt als toggle vaak
+    document.getElementById('btn-restart').addEventListener('click', restartCurrentTrack);
     
     // Reveal & Timer
     document.getElementById('reveal-btn').addEventListener('click', revealAnswer);
     document.getElementById('start-timer-btn').addEventListener('click', startTimer);
 
-    // CLICK ON WHEEL TO SPIN
+    // Wheel
     document.getElementById('wheel-click-area').addEventListener('click', spinWheel);
 });
 
@@ -124,6 +124,15 @@ async function showApp() {
     document.getElementById('login-section').classList.add('hidden');
     document.getElementById('app-section').classList.remove('hidden');
     await loadLibrary();
+}
+
+// Fisher-Yates Shuffle Algorithm (Echt random zonder dubbele)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
 }
 
 async function loadLibrary() {
@@ -136,12 +145,15 @@ async function loadLibrary() {
         
         Object.keys(fullLibrary).forEach((name, index) => {
             select.add(new Option(`${name} (${fullLibrary[name].length} tracks)`, name));
-            if (index === 0) activeGameData = fullLibrary[name];
         });
 
+        // Initialize first playlist
+        if (Object.keys(fullLibrary).length > 0) {
+            setupQueue(Object.keys(fullLibrary)[0]);
+        }
+
         select.addEventListener('change', (e) => {
-            activeGameData = fullLibrary[e.target.value];
-            resetTrackInfo();
+            setupQueue(e.target.value);
         });
 
     } catch (error) {
@@ -149,9 +161,21 @@ async function loadLibrary() {
     }
 }
 
+function setupQueue(playlistName) {
+    // 1. Maak kopie van originele data
+    const rawData = fullLibrary[playlistName];
+    // 2. Shuffle de data
+    shuffledQueue = shuffleArray([...rawData]);
+    // 3. Reset index
+    queueIndex = 0;
+    
+    console.log(`Queue loaded for ${playlistName}: ${shuffledQueue.length} songs.`);
+    resetTrackInfo();
+}
+
 // --- SPOTIFY ---
 async function fetchWebApi(endpoint, method, body) {
-    const res = await fetch(`https://api.spotify.com/${endpoint}`, {
+    const res = await fetch(`https://api.spotify.com/${endpoint}`, { // Let op: officiële URL
         headers: { 
             Authorization: `Bearer ${accessToken}`, 
             'Content-Type': 'application/json' 
@@ -167,44 +191,84 @@ async function fetchWebApi(endpoint, method, body) {
     return res;
 }
 
-async function playRandomTrack() {
-    if (!activeGameData || activeGameData.length === 0) return;
+async function playNextInQueue() {
+    if (!shuffledQueue || shuffledQueue.length === 0) return;
     
-    const randomIndex = Math.floor(Math.random() * activeGameData.length);
-    currentTrack = activeGameData[randomIndex];
-    
-    resetTrackInfo();
+    // Check of we aan het einde zijn
+    if (queueIndex >= shuffledQueue.length) {
+        alert("Playlist is finished! Reshuffling...");
+        shuffledQueue = shuffleArray([...shuffledQueue]);
+        queueIndex = 0;
+    }
 
+    // Pak volgend nummer
+    currentTrack = shuffledQueue[queueIndex];
+    queueIndex++; // Verhoog teller voor volgende keer
+    
+    resetTrackInfo(); // Maak velden leeg/onzichtbaar
+
+    // Start afspelen
     const devicesRes = await fetchWebApi('v1/me/player/devices', 'GET');
     const devicesData = await devicesRes.json();
-    if (!devicesData.devices.length) return alert("Open Spotify on a device first!");
+    if (!devicesData.devices || !devicesData.devices.length) return alert("Open Spotify on a device first!");
     
     const deviceId = devicesData.devices[0].id;
     await fetchWebApi(`v1/me/player/play?device_id=${deviceId}`, 'PUT', { uris: [currentTrack.uri] });
 }
 
+async function restartCurrentTrack() {
+    // seek to 0 position
+    await fetchWebApi('v1/me/player/seek?position_ms=0', 'PUT');
+    // Ensure it's playing
+    await fetchWebApi('v1/me/player/play', 'PUT');
+}
+
 async function sendSpotifyCommand(command, method) {
-    await fetchWebApi(`v1/me/player/${command}`, method);
+    // Voor pause/play button. Als command 'pause' is, checken we vaak de status, 
+    // maar voor simpele toggle kunnen we proberen 'play' te sturen als hij gepauzeerd is en andersom.
+    // Voor nu simpel: als command 'pause' is, stuur pause request.
+    // Eigenlijk heeft de button label 'Pause / Play', dus we gebruiken de player status.
+    
+    const stateRes = await fetchWebApi('v1/me/player', 'GET');
+    if(stateRes.ok) {
+        const state = await stateRes.json();
+        if(state.is_playing) {
+            await fetchWebApi('v1/me/player/pause', 'PUT');
+        } else {
+            await fetchWebApi('v1/me/player/play', 'PUT');
+        }
+    }
 }
 
 // --- UI ---
 function resetTrackInfo() {
-    document.getElementById('track-info').classList.remove('visible');
-    // Reset timer visuals as well when skipping track? Optional, but cleaner.
+    // Maak waarden leeg en verberg ze
+    const fields = ['val-artist', 'val-title', 'val-year'];
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        el.textContent = '???';
+        el.classList.remove('visible');
+    });
+    
+    // Reset timer UI ook voor de netheid
     document.getElementById('timer-bar').style.width = '100%';
     document.getElementById('timer-display').textContent = '30';
-    document.getElementById('timer-display').style.color = '#fff';
     clearInterval(timerInterval);
 }
 
 function revealAnswer() {
     if (!currentTrack) return;
-    document.getElementById('track-name').textContent = currentTrack.title;
-    document.getElementById('track-artist').textContent = currentTrack.artist;
-    document.getElementById('track-year').textContent = currentTrack.year;
-    document.getElementById('track-info').classList.add('visible');
+    
+    // Vul waarden in
+    document.getElementById('val-artist').textContent = currentTrack.artist;
+    document.getElementById('val-title').textContent = currentTrack.title;
+    document.getElementById('val-year').textContent = currentTrack.year;
+    
+    // Maak zichtbaar (fade in via CSS class)
+    document.getElementById('val-artist').classList.add('visible');
+    document.getElementById('val-title').classList.add('visible');
+    document.getElementById('val-year').classList.add('visible');
 }
-
 // --- WHEEL LOGIC (EXACT TASK MATCH) ---
 
 // Mapping: wheel segment index -> HTML ID of the legend item
