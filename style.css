@@ -1,3 +1,63 @@
+:root {
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-main: #ffffff;
+    --text-muted: #b3b3b3;
+    --spotify-green: #1db954;
+    --accent-blue: #2e77d0;
+
+    /* IBM Color Blind Safe Palette (High Contrast) */
+    --c-blue:   #648FFF;
+    --c-purple: #785EF0;
+    --c-pink:   #DC267F;
+    --c-orange: #FE6100;
+    --c-gold:   #FFB000;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+/* Login */
+#login-section {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    height: 100vh; text-align: center; z-index: 100; position: relative; background: var(--bg-color);
+}
+
+/* Grid Layout */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 15px;
+    height: 100vh;
+    padding: 15px;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    overflow: hidden;
+    position: relative;
+    z-index: 1; /* Keep cards behind the wheel overlay */
+}
+
+h2 { font-size: 1.1rem; margin-bottom: 10px; color: var(--text-muted); border-bottom: 1px solid #333; width: 100%; padding-bottom: 5px; }
+
 /* --- DJ BOOTH NIEUW --- */
 .playlist-wrapper { width: 100%; margin-bottom: 15px; }
 
@@ -92,3 +152,94 @@
     font-weight: bold;
     letter-spacing: 2px;
 }
+/* WHEEL OVERLAY (CENTER SCREEN) */
+.wheel-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 50; /* Above everything */
+    pointer-events: none; /* Let clicks pass through area around wheel */
+}
+
+.wheel-wrapper {
+    width: 280px; /* Bigger wheel */
+    height: 280px;
+    position: relative;
+    cursor: pointer;
+    pointer-events: auto; /* Re-enable clicks on the wheel itself */
+    transition: transform 0.2s;
+    filter: drop-shadow(0 0 20px rgba(0,0,0,0.8));
+}
+
+.wheel-wrapper:hover { transform: scale(1.05); }
+
+.wheel {
+    width: 100%; height: 100%; border-radius: 50%; border: 6px solid white;
+    position: relative; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+    background: conic-gradient(
+        var(--c-blue)   0% 20%, 
+        var(--c-purple) 20% 40%, 
+        var(--c-pink)   40% 60%, 
+        var(--c-orange) 60% 80%, 
+        var(--c-gold)   80% 100%
+    );
+}
+
+.wheel-center-cap {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: white; color: #333; width: 60px; height: 60px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-weight: bold;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5); font-size: 0.9rem;
+}
+
+.arrow {
+    position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+    font-size: 50px; color: white; z-index: 10; text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    pointer-events: none;
+}
+
+/* TIMER AREA (Bottom Left) */
+.area-timer { display: flex; flex-direction: column; justify-content: space-between; }
+
+.timer-visual-container {
+    width: 100%;
+    height: 40px;
+    background: #333;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 20px 0;
+    border: 2px solid #555;
+}
+
+.timer-bar {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--spotify-green), var(--c-gold), var(--c-pink));
+    transition: width 1s linear; /* Smooth resizing */
+}
+
+.timer-controls {
+    display: flex; align-items: center; gap: 20px;
+}
+
+#timer-display { font-size: 2.5rem; font-weight: bold; font-family: monospace; }
+#start-timer-btn { background: var(--text-muted); color: #121212; padding: 10px 20px; font-weight: bold; border-radius: 5px; border: none; }
+
+/* LEGEND (Bottom Right) */
+.area-legend { align-items: stretch; text-align: left; }
+.legend-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; flex-grow: 1; justify-content: center; }
+
+.legend-item {
+    display: flex; align-items: center; padding: 8px; border-radius: 6px;
+    background: rgba(255,255,255,0.05); transition: all 0.3s ease; opacity: 0.5;
+}
+.legend-item .dot { width: 15px; height: 15px; border-radius: 50%; margin-right: 15px; border: 1px solid rgba(255,255,255,0.2); }
+.legend-item .task-text { font-size: 1rem; font-weight: 500; }
+.legend-item.active { opacity: 1; background: rgba(255,255,255,0.2); transform: scale(1.03); border-left: 4px solid white; }
+
+/* Buttons General */
+button { cursor: pointer; }
+.btn-spotify { background-color: var(--spotify-green); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; font-size: 1rem; }
+.btn-primary { background-color: var(--accent-blue); color: white; border: none; padding: 10px; border-radius: 5px; width: 100%; }
+.btn-warning { background-color: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 10px; width: 100%;}
