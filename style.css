@@ -1,260 +1,129 @@
-/* --- ALGEMENE STIJL --- */
+:root {
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-main: #ffffff;
+    --text-muted: #b3b3b3;
+    --spotify-green: #1db954;
+    --accent-blue: #2e77d0;
+    --accent-red: #e91e63;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-    background-color: #121212; /* Spotify Donkergrijs */
-    color: white;
+    background-color: var(--bg-color);
+    color: var(--text-main);
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-    text-align: center;
-    -webkit-font-smoothing: antialiased; /* Scherpere tekst op Apple devices */
+    height: 100vh; /* Vult exact het scherm */
+    overflow: hidden; /* Geen scrollbalken */
 }
 
-/* Zorgt dat alles netjes in het midden staat */
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding-bottom: 50px;
-}
-
-/* De "Hidden" class is cruciaal voor de JavaScript */
-.hidden {
-    display: none !important;
-}
-
-/* --- LOGIN SCHERM --- */
+/* Login Scherm */
 #login-section {
-    margin-top: 100px;
-}
-
-/* --- KAARTEN & PANELEN --- */
-.card {
-    background: #282828; /* Iets lichter grijs voor contrast */
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-}
-
-/* --- FORMULIER ELEMENTEN --- */
-input, select {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #404040;
-    width: 100%;
-    box-sizing: border-box; /* Zorgt dat padding binnen de breedte valt */
-    margin-bottom: 10px;
-    background-color: #3e3e3e;
-    color: white;
-    font-size: 16px;
-}
-
-input:focus, select:focus {
-    outline: none;
-    border-color: #1DB954;
-}
-
-/* --- KNOPPEN --- */
-button {
-    padding: 12px 20px;
-    border-radius: 50px; /* Ronde Spotify knoppen */
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1em;
-    margin: 5px;
-    transition: transform 0.1s, opacity 0.2s;
-}
-
-button:active {
-    transform: scale(0.95); /* Klik effect */
-}
-
-/* Specifieke knop kleuren */
-.btn-spotify {
-    background-color: #1DB954;
-    color: black;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 800;
-    padding: 15px 30px;
-}
-
-.btn-primary {
-    background-color: #1DB954;
-    color: black;
-}
-
-.btn-warning {
-    background-color: #f1c40f; /* Geel */
-    color: black;
-    width: 100%;
-    margin-top: 10px;
-}
-
-/* Playback controls (Vorige/Pauze/Volgende) */
-.playback-controls {
-    margin-top: 15px;
     display: flex;
+    flex-direction: column;
     justify-content: center;
-    gap: 15px;
-}
-
-.playback-controls button {
-    background: transparent;
-    color: white;
-    font-size: 2em; /* Grote iconen */
-    padding: 5px;
-    margin: 0;
-}
-
-/* --- TRACK INFORMATIE --- */
-#track-info {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #404040;
-}
-
-#track-name { margin: 5px 0; font-size: 1.2em; }
-#track-artist { margin: 0 0 10px 0; color: #b3b3b3; }
-
-.badge {
-    background-color: #e74c3c;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 0.9em;
-}
-
-#spotify-link-container a {
-    color: #1DB954;
-    text-decoration: none;
-    font-weight: bold;
-    border: 1px solid #1DB954;
-    padding: 8px 15px;
-    border-radius: 20px;
-    display: inline-block;
-    margin-top: 5px;
-}
-
-/* --- GAME MODE SWITCHER --- */
-.mode-switch {
-    display: flex;
-    justify-content: center;
-    background: #282828;
-    border-radius: 30px;
-    padding: 5px;
-    margin-bottom: 20px;
-}
-
-.mode-switch button {
-    flex: 1;
-    background: transparent;
-    color: #b3b3b3;
-    margin: 0;
-}
-
-.mode-switch button.active {
-    background-color: #404040;
-    color: white;
-}
-
-/* --- CLASSIC MODE (SCOREBORD) --- */
-.player-row {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    background-color: #333;
-    margin: 8px 0;
-    padding: 10px 15px;
-    border-radius: 8px;
+    height: 100vh;
+    text-align: center;
 }
 
-.player-row span {
-    font-weight: bold;
-    font-size: 1.1em;
+.hidden { display: none !important; }
+
+/* DE GRID LAYOUT (2x2) */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 kolommen */
+    grid-template-rows: 1fr 1fr;    /* 2 rijen */
+    gap: 10px;
+    height: 100vh;
+    padding: 10px;
 }
 
-.player-controls button {
-    padding: 5px 12px;
-    font-size: 1.2em;
-    background: #555;
-    color: white;
-}
-
-.add-player-box {
+/* Algemene Card Stijl */
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 15px;
     display: flex;
-    gap: 5px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    overflow: hidden; /* Voorkomt dat inhoud de box uitrekt */
 }
 
-.add-player-box button {
-    white-space: nowrap;
+h2 { font-size: 1.2rem; margin-bottom: 15px; color: var(--text-muted); border-bottom: 1px solid #333; width: 100%; padding-bottom: 5px; }
+
+/* VLAK 1: DJ BOOTH */
+.area-dj select {
+    width: 100%; padding: 10px; margin-bottom: 10px;
+    background: #333; color: white; border: none; border-radius: 5px;
 }
 
-/* --- BINGO MODE (HET RAD) --- */
-.wheel-container {
+.playback-controls {
+    display: flex; gap: 10px; margin-top: 15px; justify-content: center;
+}
+.playback-controls button {
+    font-size: 1.5rem; background: none; border: 1px solid #555; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; color: white;
+}
+
+/* VLAK 2: INFO (Voorkom springen) */
+.track-details-container {
+    margin-top: 20px;
+    height: 120px; /* Vaste hoogte! Als tekst verschijnt, groeit de box NIET */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hidden-info {
+    opacity: 0; /* Wel ruimte innemen, niet zichtbaar */
+    transition: opacity 0.3s ease;
+}
+.hidden-info.visible { opacity: 1; }
+
+.badge { background: var(--spotify-green); padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; color: black; font-weight: bold; }
+
+/* VLAK 3: WHEEL */
+.wheel-wrapper {
     position: relative;
-    width: 280px;
-    height: 280px;
-    margin: 20px auto;
+    width: 180px; height: 180px; /* Iets kleiner om te passen */
+    margin-bottom: 10px;
 }
-
+.wheel-container { width: 100%; height: 100%; position: relative; }
 .wheel {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 5px solid white;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    position: relative;
+    width: 100%; height: 100%; border-radius: 50%; border: 4px solid white;
+    position: relative; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
     overflow: hidden;
-    transition: transform 4s cubic-bezier(0.1, 0.99, 0.1, 1); /* Soepele draai-animatie */
-    
-    /* Dit maakt de taartpunten met CSS gradient */
     background: conic-gradient(
-        #2ecc71 0% 20%,   /* Groen */
-        #ff7979 20% 40%,  /* Roze */
-        #f1c40f 40% 60%,  /* Geel */
-        #9b59b6 60% 80%,  /* Paars */
-        #3498db 80% 100%  /* Blauw */
+        #4CAF50 0% 20%, 
+        #E91E63 20% 40%, 
+        #FFEB3B 40% 60%, 
+        #9C27B0 60% 80%, 
+        #2196F3 80% 100%
     );
 }
-
-/* De pijl boven het rad */
 .arrow {
-    position: absolute;
-    top: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 40px;
-    z-index: 10;
-    color: white;
-    text-shadow: 0 2px 5px black;
+    position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+    font-size: 30px; color: white; z-index: 10; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
-/* Bingo Resultaat Box */
-.result-box {
-    background-color: #333;
-    border-radius: 10px;
-    padding: 15px;
-    margin-top: 20px;
-    text-align: left;
-    border: 1px solid #555;
+/* VLAK 4: RESULTAAT */
+.task-box {
+    background: #333; padding: 15px; border-radius: 8px; width: 100%; margin-top: 10px;
+    min-height: 100px; /* Vaste hoogte */
+    display: flex; flex-direction: column; justify-content: center;
 }
+.label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+.task-text { font-size: 1.1rem; font-weight: bold; margin-top: 5px; }
 
-.result-box h2 {
-    text-align: center;
-    text-transform: uppercase;
-    color: #1DB954;
-}
+.mini-timer { margin-top: auto; display: flex; align-items: center; gap: 10px; font-size: 1.2rem; }
 
-/* Timer */
-.timer-box {
-    margin-top: 20px;
-}
-
-#timer-display {
-    font-size: 3em;
-    font-weight: bold;
-    font-family: monospace;
-    color: #e74c3c;
-}
+/* Buttons General */
+button { cursor: pointer; }
+.btn-spotify { background-color: var(--spotify-green); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; font-size: 1rem; }
+.btn-primary { background-color: var(--accent-blue); color: white; border: none; padding: 10px 20px; border-radius: 5px; width: 100%; }
+.btn-warning { background-color: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 10px; }
+.btn-action { background-color: var(--spotify-green); color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; width: 100%; }
