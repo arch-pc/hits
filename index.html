@@ -26,33 +26,54 @@
     <div id="app-section" class="hidden">
         <div class="main-grid">
 
-            <div class="card area-dj">
-                <h2>🎛️ DJ Booth</h2>
-                <div class="controls-wrapper">
+<div class="card area-dj">
+                <h2>🎛️ DJ Booth 🎛️</h2>
+                
+                <div class="playlist-wrapper">
                     <select id="playlist-select"></select>
-                    <button id="shuffle-play-btn" class="btn-primary">🔀 Start / Shuffle</button>
-                    <div class="playback-controls">
-                        <button id="prev-btn">⏮</button>
-                        <button id="pause-btn">⏯</button>
-                        <button id="next-btn">⏭</button>
-                    </div>
+                </div>
+
+                <div class="dj-controls-grid">
+                    <button id="btn-next" class="btn-dj primary-action">
+                        <span class="icon">🎲</span>
+                        <span class="label">Next Song</span>
+                    </button>
+                    
+                    <button id="btn-pause" class="btn-dj secondary-action">
+                        <span class="icon">⏯</span>
+                        <span class="label">Pause / Play</span>
+                    </button>
+                    
+                    <button id="btn-restart" class="btn-dj secondary-action">
+                        <span class="icon">⏮</span>
+                        <span class="label">Restart</span>
+                    </button>
                 </div>
             </div>
 
             <div class="card area-info">
-                <h2>🎵 Now Playing</h2>
-                <button id="reveal-btn" class="btn-warning">Reveal Answer</button>
-                <div class="track-details-container">
-                    <div id="track-info" class="hidden-info">
-                        <h3 id="track-name">Track Title</h3>
-                        <p id="track-artist">Artist</p>
-                        <span id="track-year" class="badge">Year</span>
+                <h2>🎵 Now Playing 🎵</h2>
+                
+                <div class="info-grid">
+                    <div class="info-row">
+                        <span class="info-label">Artist:</span>
+                        <span id="val-artist" class="info-value">???</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Title:</span>
+                        <span id="val-title" class="info-value">???</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Year:</span>
+                        <span id="val-year" class="info-value">???</span>
                     </div>
                 </div>
+
+                <button id="reveal-btn" class="btn-warning large-reveal">REVEAL ANSWER</button>
             </div>
 
             <div class="card area-timer">
-                <h2>⏳ Timer</h2>
+                <h2>⏳ Timer ⏳</h2>
                 <div class="timer-visual-container">
                     <div id="timer-bar" class="timer-bar"></div>
                 </div>
@@ -63,7 +84,7 @@
             </div>
 
             <div class="card area-legend">
-                <h2>📋 Tasks</h2>
+                <h2>📋 Legend 📋</h2>
                 <div class="legend-list">
                     <div class="legend-item" id="leg-color1">
                         <span class="dot" style="background: var(--c-blue);"></span>
