@@ -1,9 +1,9 @@
-// --- CONFIGURATIE ---
+// --- CONFIGURATION ---
 const CLIENT_ID = 'a7f4c18653c549a99780219bf348a83c';
 const REDIRECT_URI = 'https://arch-pc.github.io/hits/index.html'; 
 const SCOPES = 'user-modify-playback-state user-read-playback-state user-read-currently-playing';
 
-// --- CRYPTO HELPER FUNCTIES (PKCE) ---
+// --- AUTH HELPERS ---
 function generateRandomString(length) {
     const array = new Uint8Array(length);
     window.crypto.getRandomValues(array);
@@ -24,7 +24,7 @@ async function generateCodeChallenge(codeVerifier) {
         .replace(/=+$/, '');
 }
 
-// --- AUTHENTICATIE LOGICA ---
+// --- LOGIN FLOW ---
 async function initiateLogin() {
     const codeVerifier = generateRandomString(128);
     const state = generateRandomString(16);
@@ -81,18 +81,18 @@ async function handleRedirect() {
                 window.sessionStorage.setItem('access_token', data.access_token);
                 return true;
             }
-        } catch (e) { console.error("Token fout:", e); }
+        } catch (e) { console.error("Token error:", e); }
     }
     return false;
 }
 
-// --- APP VARIABELEN ---
+// --- APP LOGIC ---
 let accessToken = window.sessionStorage.getItem('access_token');
 let fullLibrary = {};
 let activeGameData = [];
 let currentTrack = null;
+let isSpinning = false;
 
-// --- INIT ---
 window.addEventListener('load', async () => {
     if (window.location.search.includes('code=')) {
         if (await handleRedirect()) {
@@ -103,7 +103,7 @@ window.addEventListener('load', async () => {
         showApp();
     }
 
-    // Event Listeners
+    // Listeners
     document.getElementById('login-btn').addEventListener('click', initiateLogin);
     
     // DJ Controls
@@ -112,10 +112,12 @@ window.addEventListener('load', async () => {
     document.getElementById('next-btn').addEventListener('click', () => sendSpotifyCommand('next', 'POST'));
     document.getElementById('pause-btn').addEventListener('click', () => sendSpotifyCommand('pause', 'PUT'));
     
-    // Reveal & Wheel
+    // Reveal & Timer
     document.getElementById('reveal-btn').addEventListener('click', revealAnswer);
-    document.getElementById('spin-btn').addEventListener('click', spinWheel);
     document.getElementById('start-timer-btn').addEventListener('click', startTimer);
+
+    // CLICK ON WHEEL TO SPIN
+    document.getElementById('wheel-click-area').addEventListener('click', spinWheel);
 });
 
 async function showApp() {
@@ -124,17 +126,16 @@ async function showApp() {
     await loadLibrary();
 }
 
-// --- DATA LADEN ---
 async function loadLibrary() {
     try {
-        const response = await fetch('data.json'); // Zorg dat dit bestand bestaat!
+        const response = await fetch('data.json'); 
         fullLibrary = await response.json();
         
         const select = document.getElementById('playlist-select');
         select.innerHTML = '';
         
         Object.keys(fullLibrary).forEach((name, index) => {
-            select.add(new Option(`${name} (${fullLibrary[name].length} nrs)`, name));
+            select.add(new Option(`${name} (${fullLibrary[name].length} tracks)`, name));
             if (index === 0) activeGameData = fullLibrary[name];
         });
 
@@ -144,11 +145,11 @@ async function loadLibrary() {
         });
 
     } catch (error) {
-        console.error("Fout bij laden data:", error);
+        console.error("Error loading data:", error);
     }
 }
 
-// --- SPOTIFY FUNCTIES ---
+// --- SPOTIFY ---
 async function fetchWebApi(endpoint, method, body) {
     const res = await fetch(`https://api.spotify.com/${endpoint}`, {
         headers: { 
@@ -172,12 +173,11 @@ async function playRandomTrack() {
     const randomIndex = Math.floor(Math.random() * activeGameData.length);
     currentTrack = activeGameData[randomIndex];
     
-    resetTrackInfo(); // Verberg vorig antwoord
+    resetTrackInfo();
 
-    // Zoek device en speel af
     const devicesRes = await fetchWebApi('v1/me/player/devices', 'GET');
     const devicesData = await devicesRes.json();
-    if (!devicesData.devices.length) return alert("Open Spotify op een apparaat!");
+    if (!devicesData.devices.length) return alert("Open Spotify on a device first!");
     
     const deviceId = devicesData.devices[0].id;
     await fetchWebApi(`v1/me/player/play?device_id=${deviceId}`, 'PUT', { uris: [currentTrack.uri] });
@@ -187,72 +187,59 @@ async function sendSpotifyCommand(command, method) {
     await fetchWebApi(`v1/me/player/${command}`, method);
 }
 
-// --- UI FUNCTIES ---
-
+// --- UI ---
 function resetTrackInfo() {
-    // Verbergt de info weer (opacity 0)
     document.getElementById('track-info').classList.remove('visible');
 }
 
 function revealAnswer() {
     if (!currentTrack) return;
-
     document.getElementById('track-name').textContent = currentTrack.title;
     document.getElementById('track-artist').textContent = currentTrack.artist;
     document.getElementById('track-year').textContent = currentTrack.year;
-    
-    // Zorgt voor de fade-in (CSS opacity transitie)
     document.getElementById('track-info').classList.add('visible');
 }
 
-// --- BINGO WIEL LOGICA ---
+// --- WHEEL LOGIC (LEGEND BASED) ---
 
-// Alleen de MOEILIJKE opdrachten, gemapt op de kleuren van de CSS Conic Gradient
-// Volgorde in CSS: Green, Pink, Yellow, Purple, Blue
-const wheelRules = [
-    { color: 'Groen', task: 'Zing het refrein mee!', hex: '#4CAF50' },
-    { color: 'Roze',  task: 'Doe een bijpassend dansje', hex: '#E91E63' },
-    { color: 'Geel',  task: 'Raad het exacte jaartal', hex: '#FFEB3B' },
-    { color: 'Paars', task: 'Noem 3 andere nrs van deze artiest', hex: '#9C27B0' },
-    { color: 'Blauw', task: 'Doe een Air-Guitar solo', hex: '#2196F3' }
+// Mapping: wheel segment index -> HTML ID of the legend item
+const legendIds = [
+    'leg-green',  // 0
+    'leg-pink',   // 1
+    'leg-yellow', // 2
+    'leg-purple', // 3
+    'leg-blue'    // 4
 ];
 
 function spinWheel() {
+    if (isSpinning) return; // Prevent double click
+    isSpinning = true;
+
     const wheel = document.getElementById('wheel');
-    const spinBtn = document.getElementById('spin-btn');
     
-    // Reset tekst
-    document.getElementById('bingo-color').textContent = "...";
-    document.getElementById('bingo-color').style.color = "#555";
-    document.getElementById('q-hard').textContent = "Draaien maar...";
+    // Reset Legend styles
+    document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('active'));
 
-    // Disable knop tijdens draaien
-    spinBtn.disabled = true;
-
-    // Bereken rotatie
     const extraSpins = 1080 + Math.floor(Math.random() * 1080); 
     const randomDegree = Math.floor(Math.random() * 360);
     const totalDegrees = extraSpins + randomDegree;
     
     wheel.style.transform = `rotate(${totalDegrees}deg)`;
     
-    // Wacht 4 seconden (de tijd van de CSS transitie)
     setTimeout(() => {
         const realRotation = totalDegrees % 360;
-        // Elk vlak is 72 graden (360 / 5)
-        // Omdat de pijl bovenaan staat, rekenen we terug
+        // Calculation to map rotation to 5 segments
         const index = Math.floor(((360 - realRotation) % 360) / 72);
         
-        const result = wheelRules[index];
+        // Highlight the legend item
+        const winningId = legendIds[index];
+        const winningEl = document.getElementById(winningId);
         
-        // Update UI
-        const colorTitle = document.getElementById('bingo-color');
-        colorTitle.textContent = result.color.toUpperCase();
-        colorTitle.style.color = result.hex;
+        if (winningEl) {
+            winningEl.classList.add('active');
+        }
         
-        document.getElementById('q-hard').textContent = result.task;
-        
-        spinBtn.disabled = false;
+        isSpinning = false;
     }, 4000);
 }
 
@@ -264,16 +251,13 @@ function startTimer() {
     let timeLeft = 25;
     
     display.textContent = timeLeft;
-    display.style.color = '#fff'; // Reset kleur
+    display.style.color = 'inherit';
     
     timerInterval = setInterval(() => {
         timeLeft--;
         display.textContent = timeLeft;
         
-        if (timeLeft <= 5) {
-            display.style.color = '#e74c3c'; // Rood bij laatste 5 sec
-        }
-
+        if (timeLeft <= 5) display.style.color = '#e74c3c';
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             display.textContent = "0";
