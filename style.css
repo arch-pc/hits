@@ -5,7 +5,6 @@
     --text-muted: #b3b3b3;
     --spotify-green: #1db954;
     --accent-blue: #2e77d0;
-    --accent-red: #e91e63;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -14,33 +13,28 @@ body {
     background-color: var(--bg-color);
     color: var(--text-main);
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    height: 100vh; /* Vult exact het scherm */
-    overflow: hidden; /* Geen scrollbalken */
-}
-
-/* Login Scherm */
-#login-section {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
     height: 100vh;
-    text-align: center;
+    overflow: hidden;
 }
 
 .hidden { display: none !important; }
 
-/* DE GRID LAYOUT (2x2) */
-.main-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 kolommen */
-    grid-template-rows: 1fr 1fr;    /* 2 rijen */
-    gap: 10px;
-    height: 100vh;
-    padding: 10px;
+/* Login */
+#login-section {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    height: 100vh; text-align: center;
 }
 
-/* Algemene Card Stijl */
+/* Grid Layout */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 15px;
+    height: 100vh;
+    padding: 15px;
+}
+
 .card {
     background-color: var(--card-bg);
     border-radius: 12px;
@@ -48,55 +42,34 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
     text-align: center;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    overflow: hidden; /* Voorkomt dat inhoud de box uitrekt */
-}
-
-h2 { font-size: 1.2rem; margin-bottom: 15px; color: var(--text-muted); border-bottom: 1px solid #333; width: 100%; padding-bottom: 5px; }
-
-/* VLAK 1: DJ BOOTH */
-.area-dj select {
-    width: 100%; padding: 10px; margin-bottom: 10px;
-    background: #333; color: white; border: none; border-radius: 5px;
-}
-
-.playback-controls {
-    display: flex; gap: 10px; margin-top: 15px; justify-content: center;
-}
-.playback-controls button {
-    font-size: 1.5rem; background: none; border: 1px solid #555; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; color: white;
-}
-
-/* VLAK 2: INFO (Voorkom springen) */
-.track-details-container {
-    margin-top: 20px;
-    height: 120px; /* Vaste hoogte! Als tekst verschijnt, groeit de box NIET */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.hidden-info {
-    opacity: 0; /* Wel ruimte innemen, niet zichtbaar */
-    transition: opacity 0.3s ease;
-}
-.hidden-info.visible { opacity: 1; }
-
-.badge { background: var(--spotify-green); padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; color: black; font-weight: bold; }
-
-/* VLAK 3: WHEEL */
-.wheel-wrapper {
-    position: relative;
-    width: 180px; height: 180px; /* Iets kleiner om te passen */
-    margin-bottom: 10px;
-}
-.wheel-container { width: 100%; height: 100%; position: relative; }
-.wheel {
-    width: 100%; height: 100%; border-radius: 50%; border: 4px solid white;
-    position: relative; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
     overflow: hidden;
+    position: relative;
+}
+
+h2 { font-size: 1.1rem; margin-bottom: 10px; color: var(--text-muted); border-bottom: 1px solid #333; width: 100%; padding-bottom: 5px; }
+
+/* DJ Controls */
+.area-dj select { width: 100%; padding: 10px; margin-bottom: 10px; background: #333; color: white; border: none; border-radius: 5px; }
+.playback-controls { display: flex; gap: 10px; margin-top: 15px; justify-content: center; }
+.playback-controls button { font-size: 1.5rem; background: none; border: 1px solid #555; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; color: white; }
+
+/* Now Playing */
+.track-details-container { height: 120px; display: flex; flex-direction: column; justify-content: center; width: 100%; }
+.hidden-info { opacity: 0; transition: opacity 0.5s ease; }
+.hidden-info.visible { opacity: 1; }
+.badge { background: var(--spotify-green); padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; color: black; font-weight: bold; margin-top: 5px; display: inline-block;}
+
+/* THE WHEEL (Clickable) */
+.area-wheel { justify-content: center; }
+.wheel-wrapper { width: 220px; height: 220px; position: relative; cursor: pointer; transition: transform 0.2s; }
+.wheel-wrapper:hover { transform: scale(1.02); }
+.wheel-container { width: 100%; height: 100%; position: relative; }
+
+.wheel {
+    width: 100%; height: 100%; border-radius: 50%; border: 5px solid white;
+    position: relative; transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
     background: conic-gradient(
         #4CAF50 0% 20%, 
         #E91E63 20% 40%, 
@@ -104,26 +77,40 @@ h2 { font-size: 1.2rem; margin-bottom: 15px; color: var(--text-muted); border-bo
         #9C27B0 60% 80%, 
         #2196F3 80% 100%
     );
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
 }
 .arrow {
-    position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-    font-size: 30px; color: white; z-index: 10; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    font-size: 40px; color: white; z-index: 10; text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    pointer-events: none; /* Klik gaat er doorheen */
+}
+.click-hint { margin-top: 15px; color: #777; font-size: 0.8rem; font-style: italic; animation: pulse 2s infinite; }
+
+/* LEGEND (Tasks) */
+.area-legend { align-items: stretch; text-align: left; }
+.legend-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; flex-grow: 1; justify-content: center; }
+
+.legend-item {
+    display: flex; align-items: center; padding: 8px; border-radius: 6px;
+    background: rgba(255,255,255,0.05); transition: all 0.3s ease; opacity: 0.5;
+}
+.legend-item .dot { width: 15px; height: 15px; border-radius: 50%; margin-right: 15px; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+.legend-item .task-text { font-size: 1rem; font-weight: 500; }
+
+/* Active state for legend */
+.legend-item.active {
+    opacity: 1; background: rgba(255,255,255,0.2); transform: scale(1.03); border-left: 4px solid white;
 }
 
-/* VLAK 4: RESULTAAT */
-.task-box {
-    background: #333; padding: 15px; border-radius: 8px; width: 100%; margin-top: 10px;
-    min-height: 100px; /* Vaste hoogte */
-    display: flex; flex-direction: column; justify-content: center;
-}
-.label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
-.task-text { font-size: 1.1rem; font-weight: bold; margin-top: 5px; }
+/* Timer */
+.mini-timer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid #333; }
+#timer-display { font-size: 1.5rem; font-weight: bold; width: 50px; text-align: right; }
 
-.mini-timer { margin-top: auto; display: flex; align-items: center; gap: 10px; font-size: 1.2rem; }
-
-/* Buttons General */
+/* Buttons */
 button { cursor: pointer; }
 .btn-spotify { background-color: var(--spotify-green); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; font-size: 1rem; }
-.btn-primary { background-color: var(--accent-blue); color: white; border: none; padding: 10px 20px; border-radius: 5px; width: 100%; }
-.btn-warning { background-color: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 10px; }
-.btn-action { background-color: var(--spotify-green); color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; width: 100%; }
+.btn-primary { background-color: var(--accent-blue); color: white; border: none; padding: 10px; border-radius: 5px; width: 100%; }
+.btn-warning { background-color: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-bottom: 10px; width: 100%;}
+#start-timer-btn { background: #333; color: #ddd; border: none; padding: 5px 10px; border-radius: 4px; }
+
+@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
