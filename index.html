@@ -14,6 +14,15 @@
         <button id="login-btn" class="btn-spotify">Log in with Spotify</button>
     </div>
 
+    <div class="wheel-overlay">
+        <div class="wheel-wrapper clickable" id="wheel-click-area">
+            <div id="wheel" class="wheel">
+                </div>
+            <div class="wheel-center-cap">SPIN</div>
+            <div class="arrow">⬇</div>
+        </div>
+    </div>
+
     <div id="app-section" class="hidden">
         <div class="main-grid">
 
@@ -21,9 +30,7 @@
                 <h2>🎛️ DJ Booth</h2>
                 <div class="controls-wrapper">
                     <select id="playlist-select"></select>
-                    
                     <button id="shuffle-play-btn" class="btn-primary">🔀 Start / Shuffle</button>
-                    
                     <div class="playback-controls">
                         <button id="prev-btn">⏮</button>
                         <button id="pause-btn">⏯</button>
@@ -35,7 +42,6 @@
             <div class="card area-info">
                 <h2>🎵 Now Playing</h2>
                 <button id="reveal-btn" class="btn-warning">Reveal Answer</button>
-                
                 <div class="track-details-container">
                     <div id="track-info" class="hidden-info">
                         <h3 id="track-name">Track Title</h3>
@@ -45,49 +51,40 @@
                 </div>
             </div>
 
-            <div class="card area-wheel">
-                <div class="wheel-wrapper">
-                    <div class="wheel-container clickable" id="wheel-click-area">
-                        <div id="wheel" class="wheel">
-                            <div class="segment seg-green"></div>
-                            <div class="segment seg-pink"></div>
-                            <div class="segment seg-yellow"></div>
-                            <div class="segment seg-purple"></div>
-                            <div class="segment seg-blue"></div>
-                        </div>
-                        <div class="arrow">⬇</div>
-                    </div>
+            <div class="card area-timer">
+                <h2>⏳ Timer</h2>
+                <div class="timer-visual-container">
+                    <div id="timer-bar" class="timer-bar"></div>
                 </div>
-                <p class="click-hint">Click the wheel to spin</p>
+                <div class="timer-controls">
+                    <span id="timer-display">30</span>
+                    <button id="start-timer-btn">▶ START</button>
+                </div>
             </div>
 
             <div class="card area-legend">
-                <h2>📋 Tasks Legend</h2>
+                <h2>📋 Tasks</h2>
                 <div class="legend-list">
-                    <div class="legend-item" id="leg-green">
-                        <span class="dot" style="background: #4CAF50;"></span>
-                        <span class="task-text">Sing the Chorus</span>
+                    <div class="legend-item" id="leg-color1">
+                        <span class="dot" style="background: var(--c-blue);"></span>
+                        <span class="task-text">Name the artist</span>
                     </div>
-                    <div class="legend-item" id="leg-pink">
-                        <span class="dot" style="background: #E91E63;"></span>
-                        <span class="task-text">Perform a Dance</span>
+                    <div class="legend-item" id="leg-color2">
+                        <span class="dot" style="background: var(--c-purple);"></span>
+                        <span class="task-text">Name the title</span>
                     </div>
-                    <div class="legend-item" id="leg-yellow">
-                        <span class="dot" style="background: #FFEB3B;"></span>
-                        <span class="task-text">Name the Artist</span> </div>
-                    <div class="legend-item" id="leg-purple">
-                        <span class="dot" style="background: #9C27B0;"></span>
-                        <span class="task-text">Name 3 other songs</span>
+                    <div class="legend-item" id="leg-color3">
+                        <span class="dot" style="background: var(--c-pink);"></span>
+                        <span class="task-text">Guess exact year</span>
                     </div>
-                    <div class="legend-item" id="leg-blue">
-                        <span class="dot" style="background: #2196F3;"></span>
-                        <span class="task-text">Air Guitar Solo</span>
+                    <div class="legend-item" id="leg-color4">
+                        <span class="dot" style="background: var(--c-orange);"></span>
+                        <span class="task-text">Guess the decade</span>
                     </div>
-                </div>
-                
-                <div class="mini-timer">
-                    <button id="start-timer-btn">⏱ Start Timer</button>
-                    <span id="timer-display">25</span>
+                    <div class="legend-item" id="leg-color5">
+                        <span class="dot" style="background: var(--c-gold);"></span>
+                        <span class="task-text">Exact year (+- 3 yrs)</span>
+                    </div>
                 </div>
             </div>
 
