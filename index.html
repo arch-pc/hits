@@ -3,98 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self'; 
-                   script-src 'self'; 
-                   connect-src 'self' https://api.spotify.com https://accounts.spotify.com; 
-                   style-src 'self' 'unsafe-inline'; 
-                   img-src 'self' data:;">
-
-    <title> Music Bingo</title>
+    <title>Music Bingo</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container">
-        
-        <div id="login-section">
-            <h1>Music Quiz Login</h1>
-            <p>Log in with Spotify Premium.</p>
-            <button id="login-btn" class="btn-spotify">Log in</button>
-        </div>
+    <div id="login-section">
+        <h1>Music Bingo</h1>
+        <p>Connect your Spotify Premium</p>
+        <button id="login-btn" class="btn-spotify">Log in with Spotify</button>
+    </div>
 
-        <div id="app-section" class="hidden">
-            
-            <div class="card control-panel">
-                <h2>🎵 DJ Booth</h2>
-                
-                <div class="playlist-selector">
-                    <label for="playlist-select" style="display:block; margin-bottom:5px; color:#aaa;">Kies je playlist:</label>
-                    <select id="playlist-select" style="padding: 10px; width: 100%; margin-bottom: 15px;"></select>
-                </div>
+    <div id="app-section" class="hidden">
+        <div class="main-grid">
 
-                <div class="btn-group">
-                    <button id="shuffle-play-btn" class="btn-primary">🔀 Shuffle & Play</button>
-                </div>
-                
-                <div class="playback-controls">
-                    <button id="prev-btn">⏮</button>
-                    <button id="pause-btn">⏯</button>
-                    <button id="next-btn">⏭</button>
-                </div>
-
-                <div class="reveal-section">
-                    <button id="reveal-btn" class="btn-warning">Toon Antwoord</button>
+            <div class="card area-dj">
+                <h2>🎛️ DJ Booth</h2>
+                <div class="controls-wrapper">
+                    <select id="playlist-select"></select>
                     
-                    <div id="track-info" class="hidden">
-                        <h3 id="track-name">Nummer Titel</h3>
-                        <p id="track-artist">Artiest Naam</p>
-                        <span id="track-year" class="badge">Jaartal</span>
-                        <div id="spotify-link-container" style="margin-top: 15px;"></div>
+                    <button id="shuffle-play-btn" class="btn-primary">🔀 Start / Shuffle</button>
+                    
+                    <div class="playback-controls">
+                        <button id="prev-btn">⏮</button>
+                        <button id="pause-btn">⏯</button>
+                        <button id="next-btn">⏭</button>
                     </div>
                 </div>
             </div>
 
-            <div class="mode-switch">
-                <button id="btn-classic" class="active">Classic</button>
-                <button id="btn-bingo">Bingo</button>
-            </div>
-
-            <div id="mode-classic" class="game-mode">
-                <h3>Spelers Scorebord</h3>
-                <div class="add-player-box">
-                    <input type="text" id="new-player-name" placeholder="Naam speler">
-                    <button id="add-player-btn">+ Voeg toe</button>
-                </div>
-                <div id="players-list"></div>
-            </div>
-
-            <div id="mode-bingo" class="game-mode hidden">
-                <h3>Het Rad</h3>
-                <div class="wheel-container">
-                    <div id="wheel" class="wheel">
-                        <div class="segment seg-green"></div>
-                        <div class="segment seg-pink"></div>
-                        <div class="segment seg-yellow"></div>
-                        <div class="segment seg-purple"></div>
-                        <div class="segment seg-blue"></div>
+            <div class="card area-info">
+                <h2>🎵 Now Playing 🎵</h2>
+                <button id="reveal-btn" class="btn-warning">Reveal</button>
+                
+                <div class="track-details-container">
+                    <div id="track-info" class="hidden-info">
+                        <h3 id="track-name">Title</h3>
+                        <p id="track-artist">Artist</p>
+                        <span id="track-year" class="badge">Realesed in</span>
                     </div>
-                    <div class="arrow">⬇</div>
                 </div>
-                
-                <button id="spin-btn" class="btn-primary" style="margin-top: 20px;">DRAAIEN!</button>
-                
-                <div id="bingo-result" class="result-box hidden">
-                    <h2 id="bingo-color">Kleur</h2>
-                    <p><strong>Makkelijk:</strong> <br><span id="q-easy">...</span></p>
-                    <hr style="border: 0; border-top: 1px solid #555;">
-                    <p><strong>Moeilijk:</strong> <br><span id="q-hard">...</span></p>
-                </div>
+            </div>
 
-                <div class="timer-box">
-                    <div id="timer-display">25</div>
-                    <button id="start-timer-btn" style="font-size: 0.6em;">Start Timer</button>
+            <div class="card area-wheel">
+                <h2>🎡 Spin the wheel 🎡</h2>
+                <div class="wheel-wrapper">
+                    <div class="wheel-container">
+                        <div id="wheel" class="wheel">
+                            <div class="segment seg-green"></div>
+                            <div class="segment seg-pink"></div>
+                            <div class="segment seg-yellow"></div>
+                            <div class="segment seg-purple"></div>
+                            <div class="segment seg-blue"></div>
+                        </div>
+                        <div class="arrow">⬇</div>
+                    </div>
+                </div>
+                <button id="spin-btn" class="btn-action">SPIN!</button>
+            </div>
+
+            <div class="card area-result">
+                <h2>📋 Bingo Task</h2>
+                <div class="result-placeholder">
+                    <h1 id="bingo-color" style="color: #555;">...</h1>
+                    
+                    <div class="task-box">
+                        <p class="label">OPDRACHT (HARD)</p>
+                        <p id="q-hard" class="task-text">Draai aan het rad voor een opdracht...</p>
+                    </div>
+
+                    <div class="mini-timer">
+                        <span id="timer-display">25</span>s
+                        <button id="start-timer-btn">⏱</button>
+                    </div>
                 </div>
             </div>
 
