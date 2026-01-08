@@ -3,7 +3,7 @@ const CLIENT_ID = 'a7f4c18653c549a99780219bf348a83c';
 const REDIRECT_URI = 'https://arch-pc.github.io/hits/index.html'; 
 const SCOPES = 'user-modify-playback-state user-read-playback-state user-read-currently-playing';
 
-// --- CRYPTO HELPER FUNCTIES (Veilig) ---
+// --- CRYPTO HELPER FUNCTIES (PKCE) ---
 function generateRandomString(length) {
     const array = new Uint8Array(length);
     window.crypto.getRandomValues(array);
@@ -24,13 +24,12 @@ async function generateCodeChallenge(codeVerifier) {
         .replace(/=+$/, '');
 }
 
-// --- AUTHENTICATIE LOGICA (PKCE + STATE) ---
+// --- AUTHENTICATIE LOGICA ---
 async function initiateLogin() {
     const codeVerifier = generateRandomString(128);
-    const state = generateRandomString(16); // Anti-CSRF token
+    const state = generateRandomString(16);
     const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-    // Opslaan voor validatie na redirect
     window.sessionStorage.setItem('code_verifier', codeVerifier);
     window.sessionStorage.setItem('spotify_auth_state', state);
 
@@ -39,7 +38,7 @@ async function initiateLogin() {
         client_id: CLIENT_ID,
         scope: SCOPES,
         redirect_uri: REDIRECT_URI,
-        state: state, // Veiligheid: stuur state mee
+        state: state,
         code_challenge_method: 'S256',
         code_challenge: codeChallenge
     });
@@ -56,19 +55,10 @@ async function handleRedirect() {
     const storedVerifier = window.sessionStorage.getItem('code_verifier');
     const storedState = window.sessionStorage.getItem('spotify_auth_state');
 
-    // Opruimen URL (veiligheid)
     window.history.replaceState({}, document.title, REDIRECT_URI);
     
-    // Validaties
-    if (error) {
-        console.error("Spotify Auth Error:", error);
-        return false;
-    }
-
-    if (!returnedState || returnedState !== storedState) {
-        alert("Beveiligingsfout: State mismatch. Log opnieuw in.");
-        return false;
-    }
+    if (error) { console.error("Auth Error:", error); return false; }
+    if (!returnedState || returnedState !== storedState) { alert("State mismatch!"); return false; }
 
     if (code && storedVerifier) {
         const body = new URLSearchParams({
@@ -89,31 +79,23 @@ async function handleRedirect() {
             const data = await response.json();
             if (response.ok) {
                 window.sessionStorage.setItem('access_token', data.access_token);
-                // Schoon de storage op
-                window.sessionStorage.removeItem('code_verifier');
-                window.sessionStorage.removeItem('spotify_auth_state');
                 return true;
-            } else {
-                console.error("Token error:", data);
             }
-        } catch (e) {
-            console.error("Netwerk fout:", e);
-        }
+        } catch (e) { console.error("Token fout:", e); }
     }
     return false;
 }
 
-// --- APP LOGICA ---
+// --- APP VARIABELEN ---
 let accessToken = window.sessionStorage.getItem('access_token');
 let fullLibrary = {};
 let activeGameData = [];
 let currentTrack = null;
 
+// --- INIT ---
 window.addEventListener('load', async () => {
-    // Check redirect
     if (window.location.search.includes('code=')) {
-        const success = await handleRedirect();
-        if (success) {
+        if (await handleRedirect()) {
             accessToken = window.sessionStorage.getItem('access_token');
             showApp();
         }
@@ -121,18 +103,17 @@ window.addEventListener('load', async () => {
         showApp();
     }
 
-    // Event Listeners (DOM)
+    // Event Listeners
     document.getElementById('login-btn').addEventListener('click', initiateLogin);
-    document.getElementById('shuffle-play-btn').addEventListener('click', playRandomTrack);
-    document.getElementById('reveal-btn').addEventListener('click', revealAnswer);
     
+    // DJ Controls
+    document.getElementById('shuffle-play-btn').addEventListener('click', playRandomTrack);
     document.getElementById('prev-btn').addEventListener('click', () => sendSpotifyCommand('previous', 'POST'));
     document.getElementById('next-btn').addEventListener('click', () => sendSpotifyCommand('next', 'POST'));
     document.getElementById('pause-btn').addEventListener('click', () => sendSpotifyCommand('pause', 'PUT'));
     
-    document.getElementById('btn-classic').addEventListener('click', () => switchMode('classic'));
-    document.getElementById('btn-bingo').addEventListener('click', () => switchMode('bingo'));
-    document.getElementById('add-player-btn').addEventListener('click', addPlayer);
+    // Reveal & Wheel
+    document.getElementById('reveal-btn').addEventListener('click', revealAnswer);
     document.getElementById('spin-btn').addEventListener('click', spinWheel);
     document.getElementById('start-timer-btn').addEventListener('click', startTimer);
 });
@@ -143,38 +124,31 @@ async function showApp() {
     await loadLibrary();
 }
 
-// --- DATA ---
+// --- DATA LADEN ---
 async function loadLibrary() {
     try {
-        const response = await fetch('data.json');
-        if (!response.ok) throw new Error("Fout bij laden data.json");
+        const response = await fetch('data.json'); // Zorg dat dit bestand bestaat!
         fullLibrary = await response.json();
         
         const select = document.getElementById('playlist-select');
         select.innerHTML = '';
         
-        const listNames = Object.keys(fullLibrary);
-        if (listNames.length === 0) {
-            select.add(new Option("⚠️ Geen playlists", ""));
-            return;
-        }
-
-        listNames.forEach((name, index) => {
+        Object.keys(fullLibrary).forEach((name, index) => {
             select.add(new Option(`${name} (${fullLibrary[name].length} nrs)`, name));
             if (index === 0) activeGameData = fullLibrary[name];
         });
 
         select.addEventListener('change', (e) => {
             activeGameData = fullLibrary[e.target.value];
-            document.getElementById('track-info').classList.add('hidden');
+            resetTrackInfo();
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Fout bij laden data:", error);
     }
 }
 
-// --- SPOTIFY ---
+// --- SPOTIFY FUNCTIES ---
 async function fetchWebApi(endpoint, method, body) {
     const res = await fetch(`https://api.spotify.com/${endpoint}`, {
         headers: { 
@@ -187,31 +161,25 @@ async function fetchWebApi(endpoint, method, body) {
     
     if (res.status === 401) {
         window.sessionStorage.removeItem('access_token');
-        alert("Sessie verlopen. Log opnieuw in.");
-        window.location.reload();
+        location.reload();
     }
     return res;
 }
 
 async function playRandomTrack() {
-    if (!activeGameData || activeGameData.length === 0) return alert("Geen playlist geselecteerd!");
+    if (!activeGameData || activeGameData.length === 0) return;
     
     const randomIndex = Math.floor(Math.random() * activeGameData.length);
     currentTrack = activeGameData[randomIndex];
     
-    document.getElementById('track-info').classList.add('hidden'); 
+    resetTrackInfo(); // Verberg vorig antwoord
 
+    // Zoek device en speel af
     const devicesRes = await fetchWebApi('v1/me/player/devices', 'GET');
-    if (!devicesRes.ok) return;
-
     const devicesData = await devicesRes.json();
-    let deviceId = null;
-    const activeDevice = devicesData.devices.find(d => d.is_active);
+    if (!devicesData.devices.length) return alert("Open Spotify op een apparaat!");
     
-    if (activeDevice) deviceId = activeDevice.id;
-    else if (devicesData.devices.length > 0) deviceId = devicesData.devices[0].id;
-    else return alert("⚠️ Geen Spotify apparaat gevonden! Open de app.");
-
+    const deviceId = devicesData.devices[0].id;
     await fetchWebApi(`v1/me/player/play?device_id=${deviceId}`, 'PUT', { uris: [currentTrack.uri] });
 }
 
@@ -219,187 +187,96 @@ async function sendSpotifyCommand(command, method) {
     await fetchWebApi(`v1/me/player/${command}`, method);
 }
 
-// --- UI / VEILIGHEID ---
+// --- UI FUNCTIES ---
+
+function resetTrackInfo() {
+    // Verbergt de info weer (opacity 0)
+    document.getElementById('track-info').classList.remove('visible');
+}
+
 function revealAnswer() {
     if (!currentTrack) return;
 
-    // textContent is veilig (geen HTML parsing)
     document.getElementById('track-name').textContent = currentTrack.title;
     document.getElementById('track-artist').textContent = currentTrack.artist;
     document.getElementById('track-year').textContent = currentTrack.year;
     
-    const linkContainer = document.getElementById('spotify-link-container');
-    linkContainer.innerHTML = ''; 
-
-    // STRICT LINK VALIDATION
-    // We checken of het een geldige URL is én of het domain klopt.
-    if (currentTrack.link) {
-        try {
-            const url = new URL(currentTrack.link);
-            if (url.protocol === 'https:' && url.hostname === 'open.spotify.com') {
-                const a = document.createElement('a');
-                a.href = currentTrack.link;
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                a.textContent = 'Open in Spotify ↗';
-                a.style.color = '#1DB954';
-                a.style.textDecoration = 'none';
-                a.style.border = '1px solid #1DB954';
-                a.style.padding = '8px 15px';
-                a.style.borderRadius = '20px';
-                a.style.display = 'inline-block';
-                linkContainer.appendChild(a);
-            }
-        } catch (e) {
-            console.warn("Ongeldige link genegeerd:", currentTrack.link);
-        }
-    }
-    document.getElementById('track-info').classList.remove('hidden');
+    // Zorgt voor de fade-in (CSS opacity transitie)
+    document.getElementById('track-info').classList.add('visible');
 }
 
-// --- MODES ---
-function switchMode(mode) {
-    document.getElementById('mode-classic').classList.add('hidden');
-    document.getElementById('mode-bingo').classList.add('hidden');
-    document.getElementById('btn-classic').classList.remove('active');
-    document.getElementById('btn-bingo').classList.remove('active');
+// --- BINGO WIEL LOGICA ---
 
-    document.getElementById(`mode-${mode}`).classList.remove('hidden');
-    document.getElementById(`btn-${mode}`).classList.add('active');
-}
-
-// SCOREBORD - VEILIGE DOM MANIPULATIE (Geen innerHTML)
-let players = [];
-function addPlayer() {
-    const input = document.getElementById('new-player-name');
-    const name = input.value.trim();
-    if (!name) return;
-    players.push({ id: Date.now(), name, score: 0 });
-    renderPlayers();
-    input.value = '';
-}
-
-function renderPlayers() {
-    const list = document.getElementById('players-list');
-    list.innerHTML = ''; // Container leegmaken mag wel
-    
-    players.forEach(p => {
-        // We bouwen de elementen op met JS functies, niet met tekst
-        const row = document.createElement('div');
-        row.className = 'player-row';
-
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = p.name; // Veilig!
-
-        const controlsDiv = document.createElement('div');
-        controlsDiv.className = 'player-controls';
-
-        // Min knop
-        const minBtn = createButton('-', () => updateScore(p.id, -1));
-        minBtn.style.backgroundColor = '#555';
-
-        // Score
-        const scoreSpan = document.createElement('span');
-        scoreSpan.style.display = 'inline-block';
-        scoreSpan.style.width = '30px';
-        scoreSpan.style.textAlign = 'center';
-        scoreSpan.textContent = p.score;
-
-        // Plus knop
-        const plusBtn = createButton('+', () => updateScore(p.id, 1));
-        plusBtn.style.backgroundColor = '#555';
-
-        // Verwijder knop
-        const removeBtn = createButton('x', () => removePlayer(p.id));
-        removeBtn.style.backgroundColor = '#e74c3c';
-        removeBtn.style.marginLeft = '10px';
-
-        // Alles in elkaar zetten
-        controlsDiv.append(minBtn, scoreSpan, plusBtn, removeBtn);
-        row.append(nameSpan, controlsDiv);
-        list.appendChild(row);
-    });
-}
-
-// Helper voor knoppen
-function createButton(text, onClick) {
-    const btn = document.createElement('button');
-    btn.textContent = text;
-    btn.style.padding = '5px 12px';
-    btn.style.margin = '0 2px';
-    btn.style.color = 'white';
-    btn.style.border = 'none';
-    btn.style.borderRadius = '20px';
-    btn.style.cursor = 'pointer';
-    btn.addEventListener('click', onClick);
-    return btn;
-}
-
-function updateScore(id, delta) {
-    const p = players.find(x => x.id === id);
-    if (p) { p.score += delta; renderPlayers(); }
-}
-
-function removePlayer(id) {
-    players = players.filter(p => p.id !== id);
-    renderPlayers();
-}
-
-// BINGO & TIMER
-const bingoRules = [
-    { color: 'Groen', easy: 'Solo of groep?', hard: 'Titel van het nummer' }, 
-    { color: 'Roze', easy: 'Voor of na 2000?', hard: 'Het exacte jaar' }, 
-    { color: 'Geel', easy: 'Releasejaar (+- 4 jaar)', hard: 'Naam van de artiest' }, 
-    { color: 'Paars', easy: 'Welk decennium?', hard: 'Welk decennium?' }, 
-    { color: 'Blauw', easy: 'Releasejaar (+- 2 jaar)', hard: 'Releasejaar (+- 3 jaar)' } 
+// Alleen de MOEILIJKE opdrachten, gemapt op de kleuren van de CSS Conic Gradient
+// Volgorde in CSS: Green, Pink, Yellow, Purple, Blue
+const wheelRules = [
+    { color: 'Groen', task: 'Zing het refrein mee!', hex: '#4CAF50' },
+    { color: 'Roze',  task: 'Doe een bijpassend dansje', hex: '#E91E63' },
+    { color: 'Geel',  task: 'Raad het exacte jaartal', hex: '#FFEB3B' },
+    { color: 'Paars', task: 'Noem 3 andere nrs van deze artiest', hex: '#9C27B0' },
+    { color: 'Blauw', task: 'Doe een Air-Guitar solo', hex: '#2196F3' }
 ];
 
 function spinWheel() {
     const wheel = document.getElementById('wheel');
-    document.getElementById('bingo-result').classList.add('hidden');
+    const spinBtn = document.getElementById('spin-btn');
     
-    const extraSpins = 1080 + Math.floor(Math.random() * 1080); // Animatie random mag wel Math.random zijn
+    // Reset tekst
+    document.getElementById('bingo-color').textContent = "...";
+    document.getElementById('bingo-color').style.color = "#555";
+    document.getElementById('q-hard').textContent = "Draaien maar...";
+
+    // Disable knop tijdens draaien
+    spinBtn.disabled = true;
+
+    // Bereken rotatie
+    const extraSpins = 1080 + Math.floor(Math.random() * 1080); 
     const randomDegree = Math.floor(Math.random() * 360);
     const totalDegrees = extraSpins + randomDegree;
     
     wheel.style.transform = `rotate(${totalDegrees}deg)`;
     
+    // Wacht 4 seconden (de tijd van de CSS transitie)
     setTimeout(() => {
         const realRotation = totalDegrees % 360;
+        // Elk vlak is 72 graden (360 / 5)
+        // Omdat de pijl bovenaan staat, rekenen we terug
         const index = Math.floor(((360 - realRotation) % 360) / 72);
-        const result = bingoRules[index];
         
-        const resultBox = document.getElementById('bingo-result');
-        // textContent = veilig
-        document.getElementById('bingo-color').textContent = result.color;
-        document.getElementById('bingo-color').style.color = getHexColor(result.color);
-        document.getElementById('q-easy').textContent = result.easy;
-        document.getElementById('q-hard').textContent = result.hard;
+        const result = wheelRules[index];
         
-        resultBox.classList.remove('hidden');
+        // Update UI
+        const colorTitle = document.getElementById('bingo-color');
+        colorTitle.textContent = result.color.toUpperCase();
+        colorTitle.style.color = result.hex;
+        
+        document.getElementById('q-hard').textContent = result.task;
+        
+        spinBtn.disabled = false;
     }, 4000);
 }
 
-function getHexColor(colorName) {
-    const colors = { 'Groen': '#2ecc71', 'Roze': '#ff7979', 'Geel': '#f1c40f', 'Paars': '#9b59b6', 'Blauw': '#3498db' };
-    return colors[colorName] || 'white';
-}
-
+// --- TIMER ---
 let timerInterval;
 function startTimer() {
     clearInterval(timerInterval);
     const display = document.getElementById('timer-display');
     let timeLeft = 25;
+    
     display.textContent = timeLeft;
-    display.style.color = '#e74c3c';
+    display.style.color = '#fff'; // Reset kleur
     
     timerInterval = setInterval(() => {
         timeLeft--;
         display.textContent = timeLeft;
+        
+        if (timeLeft <= 5) {
+            display.style.color = '#e74c3c'; // Rood bij laatste 5 sec
+        }
+
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            display.textContent = "TIJD!";
-            display.style.color = 'white';
+            display.textContent = "0";
         }
     }, 1000);
 }
