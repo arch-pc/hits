@@ -190,6 +190,11 @@ async function sendSpotifyCommand(command, method) {
 // --- UI ---
 function resetTrackInfo() {
     document.getElementById('track-info').classList.remove('visible');
+    // Reset timer visuals as well when skipping track? Optional, but cleaner.
+    document.getElementById('timer-bar').style.width = '100%';
+    document.getElementById('timer-display').textContent = '30';
+    document.getElementById('timer-display').style.color = '#fff';
+    clearInterval(timerInterval);
 }
 
 function revealAnswer() {
@@ -200,19 +205,19 @@ function revealAnswer() {
     document.getElementById('track-info').classList.add('visible');
 }
 
-// --- WHEEL LOGIC (LEGEND BASED) ---
+// --- WHEEL LOGIC (EXACT TASK MATCH) ---
 
 // Mapping: wheel segment index -> HTML ID of the legend item
 const legendIds = [
-    'leg-green',  // 0
-    'leg-pink',   // 1
-    'leg-yellow', // 2
-    'leg-purple', // 3
-    'leg-blue'    // 4
+    'leg-color1', // Blue   - Name Artist
+    'leg-color2', // Purple - Name Title
+    'leg-color3', // Pink   - Exact Year
+    'leg-color4', // Orange - Decade
+    'leg-color5'  // Gold   - Year +- 3
 ];
 
 function spinWheel() {
-    if (isSpinning) return; // Prevent double click
+    if (isSpinning) return; 
     isSpinning = true;
 
     const wheel = document.getElementById('wheel');
@@ -228,10 +233,11 @@ function spinWheel() {
     
     setTimeout(() => {
         const realRotation = totalDegrees % 360;
-        // Calculation to map rotation to 5 segments
+        // Calculation to map rotation to 5 segments (72 degrees each)
+        // With current CSS Conic Gradient, 0deg is top (Blue).
+        // Arrow points to top.
         const index = Math.floor(((360 - realRotation) % 360) / 72);
         
-        // Highlight the legend item
         const winningId = legendIds[index];
         const winningEl = document.getElementById(winningId);
         
@@ -243,24 +249,45 @@ function spinWheel() {
     }, 4000);
 }
 
-// --- TIMER ---
+// --- TIMER (VISUAL BAR) ---
 let timerInterval;
+const MAX_TIME = 30; // Seconds
+
 function startTimer() {
     clearInterval(timerInterval);
     const display = document.getElementById('timer-display');
-    let timeLeft = 25;
+    const bar = document.getElementById('timer-bar');
     
+    let timeLeft = MAX_TIME;
+    
+    // Reset UI
     display.textContent = timeLeft;
-    display.style.color = 'inherit';
+    display.style.color = '#fff';
+    bar.style.width = '100%';
+    bar.style.backgroundColor = 'var(--spotify-green)';
     
     timerInterval = setInterval(() => {
         timeLeft--;
         display.textContent = timeLeft;
         
-        if (timeLeft <= 5) display.style.color = '#e74c3c';
+        // Update Bar Width
+        const percentage = (timeLeft / MAX_TIME) * 100;
+        bar.style.width = `${percentage}%`;
+
+        // Change colors based on urgency
+        if (timeLeft <= 10) {
+            display.style.color = 'var(--c-gold)';
+            bar.style.backgroundColor = 'var(--c-gold)';
+        }
+        if (timeLeft <= 5) {
+            display.style.color = 'var(--c-pink)'; // Alarm color
+            bar.style.backgroundColor = 'var(--c-pink)';
+        }
+
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             display.textContent = "0";
+            bar.style.width = '0%';
         }
     }, 1000);
 }
