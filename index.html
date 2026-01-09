@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';">
+
     <title>Music Bingo</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -10,7 +14,7 @@
 
     <div id="login-section">
         <h1>Music Bingo Login</h1>
-        <p>Please log in with Spotify Premium</p>
+        <p>Please log in with Spotify Premium to enable playback.</p>
         <button id="login-btn" class="btn-spotify">Log in with Spotify</button>
     </div>
 
@@ -26,8 +30,8 @@
     <div id="app-section" class="hidden">
         <div class="main-grid">
 
-<div class="card area-dj">
-                <h2>🎛️ DJ Booth 🎛️</h2>
+            <div class="card area-dj">
+                <h2>🎛️ DJ Booth</h2>
                 
                 <div class="playlist-wrapper">
                     <select id="playlist-select"></select>
@@ -52,7 +56,7 @@
             </div>
 
             <div class="card area-info">
-                <h2>🎵 Now Playing 🎵</h2>
+                <h2>🎵 Now Playing</h2>
                 
                 <div class="info-grid">
                     <div class="info-row">
@@ -73,10 +77,12 @@
             </div>
 
             <div class="card area-timer">
-                <h2>⏳ Timer ⏳</h2>
+                <h2>⏳ Timer</h2>
+                
                 <div class="timer-visual-container">
                     <div id="timer-bar" class="timer-bar"></div>
                 </div>
+                
                 <div class="timer-controls">
                     <span id="timer-display">30</span>
                     <button id="start-timer-btn">▶ START</button>
@@ -84,7 +90,7 @@
             </div>
 
             <div class="card area-legend">
-                <h2>📋 Legend 📋</h2>
+                <h2>📋 Tasks</h2>
                 <div class="legend-list">
                     <div class="legend-item" id="leg-color1">
                         <span class="dot" style="background: var(--c-blue);"></span>
