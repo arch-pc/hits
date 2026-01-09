@@ -1,269 +1,122 @@
 :root {
-    /* Algemene kleuren */
-    --bg-color: #121212;
-    --card-bg: #1e1e1e;
+    /* --- KLEURENPALET --- */
+    --bg-color: #121212;         /* Achtergrond donker */
+    --card-bg: #1e1e1e;          /* Kaarten iets lichter */
     --text-main: #ffffff;
     --text-muted: #b3b3b3;
+    
+    /* Spotify Groen & Accenten */
     --spotify-green: #1db954;
     --accent-blue: #2e77d0;
 
-    /* IBM Color Blind Safe Palette (Hoog Contrast) */
-    /* Volgorde matcht met de JS array en de wiel gradient */
-    --c-blue:   #648FFF;
-    --c-purple: #785EF0;
-    --c-pink:   #DC267F;
-    --c-orange: #FE6100;
-    --c-gold:   #FFB000;
+    /* IBM Color Blind Safe Palette (High Contrast) */
+    --c-blue:   #648FFF; /* Kleur 1 */
+    --c-purple: #785EF0; /* Kleur 2 */
+    --c-pink:   #DC267F; /* Kleur 3 */
+    --c-orange: #FE6100; /* Kleur 4 */
+    --c-gold:   #FFB000; /* Kleur 5 */
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+/* --- RESET & BASIC SETUP --- */
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    user-select: none; /* Voorkomt tekst selecteren tijdens klikken */
+    -webkit-tap-highlight-color: transparent; /* Geen blauwe flits op mobiel */
 }
 
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    height: 100vh;      /* Vult het hele scherm */
-    overflow: hidden;   /* Geen scrollbalken */
+    height: 100vh;       /* Vult exact het scherm */
     width: 100vw;
+    overflow: hidden;    /* Geen scrollbalken */
 }
+
+.hidden { display: none !important; }
 
 /* --- LOGIN SCHERM --- */
 #login-section {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    width: 100vw;
-    text-align: center;
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
     background-color: var(--bg-color);
-    z-index: 100; /* Boven alles */
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center;
+    z-index: 200; /* Boven alles */
 }
 
-.hidden {
-    display: none !important;
-}
+#login-section h1 { margin-bottom: 20px; font-size: 2rem; }
+#login-section p { margin-bottom: 40px; color: var(--text-muted); }
 
-/* --- HOOFD LAYOUT (2x2 GRID) --- */
+/* --- MAIN GRID LAYOUT (2x2) --- */
 .main-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 gelijke kolommen */
-    grid-template-rows: 1fr 1fr;    /* 2 gelijke rijen */
+    grid-template-columns: 1fr 1fr; /* 2 kolommen */
+    grid-template-rows: 1fr 1fr;    /* 2 rijen */
     gap: 15px;
     height: 100vh;
     padding: 15px;
-    position: relative;
-    z-index: 1; /* Onder het wiel */
 }
 
 /* Algemene Card Stijl */
 .card {
     background-color: var(--card-bg);
     border-radius: 12px;
-    padding: 20px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     overflow: hidden;
     position: relative;
+    z-index: 1; /* Onder het wiel */
 }
 
 h2 {
     font-size: 1.2rem;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     color: var(--text-muted);
     border-bottom: 1px solid #333;
     width: 100%;
-    padding-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    padding-bottom: 8px;
+    text-align: center;
 }
 
-/* --- AREA 1: DJ BOOTH --- */
-.area-dj {
-    justify-content: flex-start;
-}
+/* --- KNOPPEN ALGEMEEN --- */
+button { cursor: pointer; border: none; font-family: inherit; }
+button:active { transform: scale(0.98); }
 
-.playlist-wrapper {
-    width: 100%;
-    margin-bottom: 15px;
-}
+.btn-spotify { background-color: var(--spotify-green); color: white; padding: 15px 30px; border-radius: 25px; font-weight: bold; font-size: 1rem; }
+.btn-warning { background-color: #ff9800; color: white; border-radius: 5px; }
 
-.area-dj select {
-    width: 100%;
-    padding: 12px;
-    background: #333;
-    color: white;
-    border: 1px solid #444;
-    border-radius: 8px;
-    font-size: 1rem;
-    outline: none;
-}
-
-.dj-controls-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 kolommen */
-    gap: 15px;
-    width: 100%;
-    flex-grow: 1;
-}
-
-.btn-dj {
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-weight: bold;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    cursor: pointer;
-    transition: transform 0.1s, filter 0.2s;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
-
-.btn-dj:active {
-    transform: scale(0.96);
-}
-
-.btn-dj:hover {
-    filter: brightness(1.1);
-}
-
-.btn-dj .icon {
-    font-size: 2.5rem;
-    margin-bottom: 5px;
-}
-
-.btn-dj .label {
-    font-size: 0.9rem;
-    text-transform: uppercase;
-}
-
-/* 'Next Song' is groot en blauw */
-.primary-action {
-    background-color: var(--accent-blue);
-    grid-column: 1 / -1; /* Pakt de hele breedte */
-}
-
-/* Pauze en Restart zijn grijs */
-.secondary-action {
-    background-color: #333;
-    border: 1px solid #555;
-}
-
-/* --- AREA 2: NOW PLAYING (GROTE TEKST) --- */
-.area-info {
-    justify-content: space-between;
-}
-
-.info-grid {
-    width: 100%;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-    gap: 10px;
-}
-
-.info-row {
-    display: grid;
-    grid-template-columns: 80px 1fr; /* Label vast, waarde flexibel */
-    align-items: center;
-    border-bottom: 1px solid #2a2a2a;
-    padding: 8px 0;
-}
-
-.info-label {
-    color: var(--text-muted);
-    font-size: 1rem;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.info-value {
-    color: var(--spotify-green);
-    font-size: 1.8rem; /* Lekker groot */
-    font-weight: bold;
-    padding-left: 15px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.5s ease;
-}
-
-.info-value.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.large-reveal {
-    width: 100%;
-    padding: 20px;
-    font-size: 1.4rem;
-    font-weight: bold;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    background-color: #ff9800;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);
-}
-
-/* --- HET WIEL (CENTRAAL OVERLAY) --- */
+/* --- WIEL OVERLAY (CENTRAAL) --- */
 .wheel-overlay {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100vw;
-    height: 100vh;
-    z-index: 50; /* Boven de kaarten */
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    display: flex; justify-content: center; align-items: center;
+    z-index: 100; /* Boven de kaarten */
     pointer-events: none; /* Kliks gaan door de lege ruimte heen */
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .wheel-wrapper {
-    width: 320px; /* Groot wiel */
+    width: 320px; /* Iets groter wiel */
     height: 320px;
     position: relative;
     cursor: pointer;
-    pointer-events: auto; /* Het wiel zelf vangt wel kliks */
+    pointer-events: auto; /* Het wiel zelf is WEL klikbaar */
+    filter: drop-shadow(0 0 25px rgba(0,0,0,0.8));
     transition: transform 0.2s;
-    filter: drop-shadow(0 0 30px rgba(0,0,0,0.8));
-    border-radius: 50%;
 }
-
-.wheel-wrapper:hover {
-    transform: scale(1.05);
-}
+.wheel-wrapper:active { transform: scale(0.95); }
 
 .wheel {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     border-radius: 50%;
     border: 8px solid white;
-    position: relative;
-    /* De animatie curve voor het draaien */
-    transition: transform 4s cubic-bezier(0.15, 0.60, 0.10, 1.0); 
-    /* Gradient: Matcht de volgorde in de JS legendIds */
+    transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); /* Smooth spin stop */
+    /* De taartpunten */
     background: conic-gradient(
         var(--c-blue)   0% 20%, 
         var(--c-purple) 20% 40%, 
@@ -273,174 +126,147 @@ h2 {
     );
 }
 
-/* De knop in het midden (statisch) */
 .wheel-center-cap {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    color: #222;
-    width: 70px;
-    height: 70px;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: white; color: #333;
+    width: 70px; height: 70px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 1.2rem;
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    z-index: 5;
-    user-select: none;
 }
 
-/* De pijl bovenaan */
 .arrow {
-    position: absolute;
-    top: -35px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 60px;
-    color: white;
-    z-index: 10;
-    text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+    position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
+    font-size: 60px; color: white; 
+    z-index: 101; 
+    text-shadow: 0 4px 8px rgba(0,0,0,0.8);
     pointer-events: none;
 }
 
-/* --- AREA 3: TIMER --- */
-.area-timer {
-    justify-content: center;
+/* --- AREA 1: DJ BOOTH --- */
+.area-dj select {
+    width: 100%; padding: 12px; margin-bottom: 15px;
+    background: #333; color: white; border: none; border-radius: 8px; font-size: 1rem;
+}
+.playlist-wrapper { width: 100%; }
+
+.dj-controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    flex-grow: 1; /* Vul de rest van de kaart */
 }
 
-.timer-visual-container {
-    width: 100%;
-    height: 60px; /* Dikke balk */
-    background: #2a2a2a;
-    border-radius: 30px;
+.btn-dj {
+    border-radius: 10px; color: white; font-weight: bold;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+.btn-dj .icon { font-size: 2rem; margin-bottom: 5px; }
+.btn-dj .label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+
+.primary-action {
+    grid-column: span 2; /* Volledige breedte */
+    background-color: var(--accent-blue);
+    font-size: 1.1rem;
+}
+.secondary-action {
+    background-color: #333;
+    border: 1px solid #444;
+}
+
+/* --- AREA 2: NOW PLAYING (Grote letters) --- */
+.area-info { justify-content: space-between; }
+
+.info-grid {
+    width: 100%; display: flex; flex-direction: column;
+    justify-content: center; flex-grow: 1; gap: 10px;
+}
+
+.info-row {
+    display: flex; align-items: center;
+    border-bottom: 1px solid #333; padding-bottom: 5px;
     overflow: hidden;
-    margin: 20px 0;
-    border: 3px solid #444;
-    position: relative;
+}
+
+.info-label {
+    width: 80px; flex-shrink: 0;
+    color: var(--text-muted); font-size: 1rem; font-weight: bold; text-transform: uppercase;
+}
+
+.info-value {
+    color: var(--spotify-green);
+    font-size: 1.6rem; /* GROOT */
+    font-weight: bold;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    padding-left: 10px;
+    opacity: 0; transition: opacity 0.5s ease;
+}
+.info-value.visible { opacity: 1; }
+
+.large-reveal {
+    width: 100%; padding: 15px;
+    font-size: 1.2rem; font-weight: bold; letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* --- AREA 3: TIMER --- */
+.area-timer { justify-content: space-between; }
+
+.timer-visual-container {
+    width: 100%; height: 50px;
+    background: #333; border-radius: 25px;
+    border: 2px solid #555;
+    overflow: hidden;
+    margin: auto 0; /* Verticaal centreren */
 }
 
 .timer-bar {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     background-color: var(--spotify-green);
     transition: width 1s linear, background-color 1s ease;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5) inset;
 }
 
 .timer-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; padding: 0 10px;
 }
 
-#timer-display {
-    font-size: 3.5rem;
-    font-weight: 900;
-    font-family: 'Courier New', monospace;
-    line-height: 1;
-    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
-}
-
+#timer-display { font-size: 3rem; font-weight: bold; font-family: monospace; }
 #start-timer-btn {
-    background: white;
-    color: black;
-    padding: 12px 40px;
-    font-weight: bold;
-    border-radius: 25px;
-    border: none;
-    font-size: 1.1rem;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: background 0.2s;
+    background: white; color: black; padding: 10px 25px;
+    border-radius: 20px; font-weight: bold; font-size: 1.2rem;
 }
 
-#start-timer-btn:hover {
-    background: #ddd;
-}
-
-/* --- AREA 4: LEGEND (RECHTSONDER) --- */
-.area-legend {
-    align-items: stretch;
-    text-align: left;
-}
-
+/* --- AREA 4: LEGEND (Taken) --- */
+.area-legend { align-items: stretch; }
 .legend-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 10px;
-    flex-grow: 1;
-    justify-content: center;
+    display: flex; flex-direction: column; 
+    justify-content: center; flex-grow: 1; gap: 8px;
 }
 
 .legend-item {
-    display: flex;
-    align-items: center;
-    padding: 10px 15px;
-    border-radius: 8px;
+    display: flex; align-items: center;
+    padding: 10px; border-radius: 8px;
     background: rgba(255,255,255,0.05);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    opacity: 0.4; /* Standaard gedimd */
-    border-left: 5px solid transparent;
+    transition: all 0.3s ease; opacity: 0.4;
 }
 
 .legend-item .dot {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+    width: 20px; height: 20px; border-radius: 50%;
     margin-right: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.2);
 }
 
-.legend-item .task-text {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #eee;
-}
+.legend-item .task-text { font-size: 1.1rem; font-weight: 500; }
 
-/* ACTIEVE STAAT (Wanneer het wiel stopt) */
+/* Actieve status (als wiel stopt) */
 .legend-item.active {
     opacity: 1;
-    background: rgba(255,255,255,0.15);
-    transform: scale(1.05) translateX(10px);
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     border-left: 5px solid white;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-
-/* --- KNOPPEN ALGEMEEN --- */
-.btn-spotify {
-    background-color: var(--spotify-green);
-    color: white;
-    border: none;
-    padding: 15px 40px;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 1.1rem;
-    cursor: pointer;
-    box-shadow: 0 5px 15px rgba(29, 185, 84, 0.4);
-}
-
-/* Responsive tweaks voor kleine schermen, mocht dat nodig zijn */
-@media (max-width: 800px) {
-    .main-grid {
-        display: flex;
-        flex-direction: column;
-        height: auto;
-        overflow-y: auto;
-    }
-    .wheel-overlay {
-        position: fixed; /* Blijft vast staan op mobiel */
-        pointer-events: none;
-    }
-    .wheel-wrapper {
-        width: 200px;
-        height: 200px;
-    }
 }
