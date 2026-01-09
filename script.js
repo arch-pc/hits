@@ -1,9 +1,9 @@
-// --- CONFIGURATION ---
-const CLIENT_ID = 'a7f4c18653c549a99780219bf348a83c';
-const REDIRECT_URI = 'https://arch-pc.github.io/hits/index.html'; 
+// --- CONFIGURATIE ---
+const CLIENT_ID = 'a7f4c18653c549a99780219bf348a83c'; // Jouw Client ID
+const REDIRECT_URI = 'https://arch-pc.github.io/hits/index.html'; // Jouw Github URL
 const SCOPES = 'user-modify-playback-state user-read-playback-state user-read-currently-playing';
 
-// --- AUTH HELPERS ---
+// --- AUTH HELPER FUNCTIES (PKCE Security) ---
 function generateRandomString(length) {
     const array = new Uint8Array(length);
     window.crypto.getRandomValues(array);
@@ -24,7 +24,7 @@ async function generateCodeChallenge(codeVerifier) {
         .replace(/=+$/, '');
 }
 
-// --- LOGIN FLOW ---
+// --- AUTHENTICATIE FLOW ---
 async function initiateLogin() {
     const codeVerifier = generateRandomString(128);
     const state = generateRandomString(16);
@@ -43,6 +43,7 @@ async function initiateLogin() {
         code_challenge: codeChallenge
     });
 
+    // Correcte Spotify Authorize URL
     window.location = 'https://accounts.spotify.com/authorize?' + args;
 }
 
@@ -55,10 +56,11 @@ async function handleRedirect() {
     const storedVerifier = window.sessionStorage.getItem('code_verifier');
     const storedState = window.sessionStorage.getItem('spotify_auth_state');
 
+    // URL opschonen
     window.history.replaceState({}, document.title, REDIRECT_URI);
     
-    if (error) { console.error("Auth Error:", error); return false; }
-    if (!returnedState || returnedState !== storedState) { alert("State mismatch!"); return false; }
+    if (error) { console.error("Spotify Auth Error:", error); return false; }
+    if (!returnedState || returnedState !== storedState) { alert("Security Error: State mismatch."); return false; }
 
     if (code && storedVerifier) {
         const body = new URLSearchParams({
@@ -70,6 +72,7 @@ async function handleRedirect() {
         });
 
         try {
+            // Correcte Spotify Token URL
             const response = await fetch('https://accounts.spotify.com/api/token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -79,44 +82,51 @@ async function handleRedirect() {
             const data = await response.json();
             if (response.ok) {
                 window.sessionStorage.setItem('access_token', data.access_token);
+                // Ook refresh token opslaan voor later gebruik zou netter zijn, 
+                // maar voor nu is dit voldoende voor een sessie van 1 uur.
                 return true;
+            } else {
+                console.error("Token error:", data);
             }
-        } catch (e) { console.error("Token error:", e); }
+        } catch (e) { console.error("Netwerk fout:", e); }
     }
     return false;
 }
 
-// --- APP LOGIC ---
+// --- APP STATES ---
 let accessToken = window.sessionStorage.getItem('access_token');
-let fullLibrary = {};
-let shuffledQueue = []; // Hier slaan we de gehusselde lijst op
-let queueIndex = 0;     // Waar zijn we in de lijst?
-let currentTrack = null;
+let fullLibrary = {};     // Alle playlists uit data.json
+let shuffledQueue = [];   // De huidige gehusselde afspeellijst
+let queueIndex = 0;       // Welk nummer zijn we?
+let currentTrack = null;  // Het huidige track object
+let isSpinning = false;   // Voorkomt dubbel klikken op het wiel
 
+// --- INITIALISATIE ---
 window.addEventListener('load', async () => {
-    // (Login check code hierboven laten staan zoals die was...)
+    // 1. Check of we terugkomen van login
     if (window.location.search.includes('code=')) {
         if (await handleRedirect()) {
             accessToken = window.sessionStorage.getItem('access_token');
             showApp();
         }
     } else if (accessToken) {
+        // 2. We zijn al ingelogd
         showApp();
     }
 
-    // Listeners
+    // 3. Event Listeners koppelen
     document.getElementById('login-btn').addEventListener('click', initiateLogin);
     
-    // NIEUWE DJ CONTROLS
+    // DJ Knoppen
     document.getElementById('btn-next').addEventListener('click', playNextInQueue);
-    document.getElementById('btn-pause').addEventListener('click', () => sendSpotifyCommand('pause', 'PUT')); // Werkt als toggle vaak
+    document.getElementById('btn-pause').addEventListener('click', togglePlayback);
     document.getElementById('btn-restart').addEventListener('click', restartCurrentTrack);
     
-    // Reveal & Timer
+    // Info & Timer
     document.getElementById('reveal-btn').addEventListener('click', revealAnswer);
     document.getElementById('start-timer-btn').addEventListener('click', startTimer);
 
-    // Wheel
+    // Wiel
     document.getElementById('wheel-click-area').addEventListener('click', spinWheel);
 });
 
@@ -126,7 +136,9 @@ async function showApp() {
     await loadLibrary();
 }
 
-// Fisher-Yates Shuffle Algorithm (Echt random zonder dubbele)
+// --- DATA & QUEUE LOGICA ---
+
+// Fisher-Yates Shuffle: Zorgt voor een perfecte, random volgorde zonder dubbelen
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -138,44 +150,53 @@ function shuffleArray(array) {
 async function loadLibrary() {
     try {
         const response = await fetch('data.json'); 
+        if (!response.ok) throw new Error("Kon data.json niet vinden");
         fullLibrary = await response.json();
         
         const select = document.getElementById('playlist-select');
         select.innerHTML = '';
         
-        Object.keys(fullLibrary).forEach((name, index) => {
-            select.add(new Option(`${name} (${fullLibrary[name].length} tracks)`, name));
-        });
-
-        // Initialize first playlist
-        if (Object.keys(fullLibrary).length > 0) {
-            setupQueue(Object.keys(fullLibrary)[0]);
+        const playlistNames = Object.keys(fullLibrary);
+        
+        if (playlistNames.length === 0) {
+            alert("data.json is leeg!");
+            return;
         }
 
+        // Dropdown vullen
+        playlistNames.forEach((name) => {
+            select.add(new Option(`${name} (${fullLibrary[name].length} songs)`, name));
+        });
+
+        // Eerste playlist direct laden en shufflen
+        setupQueue(playlistNames[0]);
+
+        // Luister naar verandering van playlist
         select.addEventListener('change', (e) => {
             setupQueue(e.target.value);
         });
 
     } catch (error) {
-        console.error("Error loading data:", error);
+        console.error("Fout bij laden data:", error);
     }
 }
 
 function setupQueue(playlistName) {
-    // 1. Maak kopie van originele data
     const rawData = fullLibrary[playlistName];
-    // 2. Shuffle de data
+    if (!rawData) return;
+
+    // Maak kopie en shuffle
     shuffledQueue = shuffleArray([...rawData]);
-    // 3. Reset index
     queueIndex = 0;
     
-    console.log(`Queue loaded for ${playlistName}: ${shuffledQueue.length} songs.`);
-    resetTrackInfo();
+    console.log(`Queue geladen voor ${playlistName}: ${shuffledQueue.length} nummers.`);
+    resetTrackInfo(); // Reset het scherm
 }
 
-// --- SPOTIFY ---
+// --- SPOTIFY API FUNCTIES ---
+
 async function fetchWebApi(endpoint, method, body) {
-    const res = await fetch(`https://api.spotify.com/${endpoint}`, { // Let op: officiële URL
+    const res = await fetch(`https://api.spotify.com/${endpoint}`, {
         headers: { 
             Authorization: `Bearer ${accessToken}`, 
             'Content-Type': 'application/json' 
@@ -185,99 +206,127 @@ async function fetchWebApi(endpoint, method, body) {
     });
     
     if (res.status === 401) {
+        // Token verlopen
         window.sessionStorage.removeItem('access_token');
-        location.reload();
+        alert("Sessie verlopen. Log opnieuw in.");
+        window.location.reload();
     }
     return res;
 }
 
+// Speelt het volgende nummer in de gehusselde lijst
 async function playNextInQueue() {
     if (!shuffledQueue || shuffledQueue.length === 0) return;
     
     // Check of we aan het einde zijn
     if (queueIndex >= shuffledQueue.length) {
-        alert("Playlist is finished! Reshuffling...");
-        shuffledQueue = shuffleArray([...shuffledQueue]);
-        queueIndex = 0;
+        const restart = confirm("Playlist is afgelopen! Wil je opnieuw beginnen (reshuffle)?");
+        if (restart) {
+            shuffledQueue = shuffleArray([...shuffledQueue]);
+            queueIndex = 0;
+        } else {
+            return;
+        }
     }
 
-    // Pak volgend nummer
+    // Pak huidige track en hoog index op
     currentTrack = shuffledQueue[queueIndex];
-    queueIndex++; // Verhoog teller voor volgende keer
-    
-    resetTrackInfo(); // Maak velden leeg/onzichtbaar
+    queueIndex++;
 
-    // Start afspelen
+    resetTrackInfo(); // UI leegmaken
+
+    // Haal actieve apparaten op
     const devicesRes = await fetchWebApi('v1/me/player/devices', 'GET');
     const devicesData = await devicesRes.json();
-    if (!devicesData.devices || !devicesData.devices.length) return alert("Open Spotify on a device first!");
     
-    const deviceId = devicesData.devices[0].id;
+    if (!devicesData.devices || !devicesData.devices.length) {
+        return alert("⚠️ Geen Spotify apparaat gevonden! Open Spotify op je device.");
+    }
+    
+    // Gebruik het eerste actieve apparaat, of gewoon het eerste in de lijst
+    let deviceId = devicesData.devices[0].id;
+    const activeDevice = devicesData.devices.find(d => d.is_active);
+    if (activeDevice) deviceId = activeDevice.id;
+
+    // Start afspelen
     await fetchWebApi(`v1/me/player/play?device_id=${deviceId}`, 'PUT', { uris: [currentTrack.uri] });
 }
 
-async function restartCurrentTrack() {
-    // seek to 0 position
-    await fetchWebApi('v1/me/player/seek?position_ms=0', 'PUT');
-    // Ensure it's playing
-    await fetchWebApi('v1/me/player/play', 'PUT');
-}
-
-async function sendSpotifyCommand(command, method) {
-    // Voor pause/play button. Als command 'pause' is, checken we vaak de status, 
-    // maar voor simpele toggle kunnen we proberen 'play' te sturen als hij gepauzeerd is en andersom.
-    // Voor nu simpel: als command 'pause' is, stuur pause request.
-    // Eigenlijk heeft de button label 'Pause / Play', dus we gebruiken de player status.
-    
+// Toggle Play/Pause
+async function togglePlayback() {
     const stateRes = await fetchWebApi('v1/me/player', 'GET');
-    if(stateRes.ok) {
-        const state = await stateRes.json();
-        if(state.is_playing) {
-            await fetchWebApi('v1/me/player/pause', 'PUT');
-        } else {
-            await fetchWebApi('v1/me/player/play', 'PUT');
-        }
+    if (!stateRes.ok) return; // Geen actieve speler
+    
+    // Soms geeft Spotify 204 No Content als er niks speelt
+    if (stateRes.status === 204) return alert("Start eerst een nummer.");
+
+    const state = await stateRes.json();
+    if (state.is_playing) {
+        await fetchWebApi('v1/me/player/pause', 'PUT');
+    } else {
+        await fetchWebApi('v1/me/player/play', 'PUT');
     }
 }
 
-// --- UI ---
+// Start nummer opnieuw (Seek to 0)
+async function restartCurrentTrack() {
+    await fetchWebApi('v1/me/player/seek?position_ms=0', 'PUT');
+}
+
+// --- UI FUNCTIES ---
+
 function resetTrackInfo() {
-    // Maak waarden leeg en verberg ze
+    // Info velden resetten
     const fields = ['val-artist', 'val-title', 'val-year'];
     fields.forEach(id => {
         const el = document.getElementById(id);
-        el.textContent = '???';
-        el.classList.remove('visible');
+        if (el) {
+            el.textContent = '???';
+            el.classList.remove('visible');
+        }
     });
-    
-    // Reset timer UI ook voor de netheid
-    document.getElementById('timer-bar').style.width = '100%';
-    document.getElementById('timer-display').textContent = '30';
+
+    // Timer resetten
     clearInterval(timerInterval);
+    const timerBar = document.getElementById('timer-bar');
+    const timerDisplay = document.getElementById('timer-display');
+    if (timerBar) {
+        timerBar.style.width = '100%';
+        timerBar.style.backgroundColor = 'var(--spotify-green)';
+    }
+    if (timerDisplay) {
+        timerDisplay.textContent = '30';
+        timerDisplay.style.color = '#fff';
+    }
 }
 
 function revealAnswer() {
     if (!currentTrack) return;
     
-    // Vul waarden in
-    document.getElementById('val-artist').textContent = currentTrack.artist;
-    document.getElementById('val-title').textContent = currentTrack.title;
-    document.getElementById('val-year').textContent = currentTrack.year;
-    
-    // Maak zichtbaar (fade in via CSS class)
-    document.getElementById('val-artist').classList.add('visible');
-    document.getElementById('val-title').classList.add('visible');
-    document.getElementById('val-year').classList.add('visible');
-}
-// --- WHEEL LOGIC (EXACT TASK MATCH) ---
+    const artistEl = document.getElementById('val-artist');
+    const titleEl = document.getElementById('val-title');
+    const yearEl = document.getElementById('val-year');
 
-// Mapping: wheel segment index -> HTML ID of the legend item
+    artistEl.textContent = currentTrack.artist;
+    titleEl.textContent = currentTrack.title;
+    yearEl.textContent = currentTrack.year;
+
+    // Animatie triggeren
+    artistEl.classList.add('visible');
+    titleEl.classList.add('visible');
+    yearEl.classList.add('visible');
+}
+
+// --- BINGO WIEL FUNCTIES ---
+
+// ID's van de legenda items (volgorde moet matchen met CSS Conic Gradient segments)
+// Volgorde in CSS was: Blue (0-20%), Purple (20-40%), Pink (40-60%), Orange (60-80%), Gold (80-100%)
 const legendIds = [
-    'leg-color1', // Blue   - Name Artist
-    'leg-color2', // Purple - Name Title
-    'leg-color3', // Pink   - Exact Year
-    'leg-color4', // Orange - Decade
-    'leg-color5'  // Gold   - Year +- 3
+    'leg-color1', // Blue
+    'leg-color2', // Purple
+    'leg-color3', // Pink
+    'leg-color4', // Orange
+    'leg-color5'  // Gold
 ];
 
 function spinWheel() {
@@ -286,20 +335,22 @@ function spinWheel() {
 
     const wheel = document.getElementById('wheel');
     
-    // Reset Legend styles
+    // Reset vorige highlights
     document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('active'));
 
-    const extraSpins = 1080 + Math.floor(Math.random() * 1080); 
+    // Bereken rotatie
+    const extraSpins = 1080 + Math.floor(Math.random() * 1080); // Minimaal 3 rondjes
     const randomDegree = Math.floor(Math.random() * 360);
     const totalDegrees = extraSpins + randomDegree;
     
     wheel.style.transform = `rotate(${totalDegrees}deg)`;
     
+    // Wacht 4 seconden (duur van CSS transition)
     setTimeout(() => {
         const realRotation = totalDegrees % 360;
-        // Calculation to map rotation to 5 segments (72 degrees each)
-        // With current CSS Conic Gradient, 0deg is top (Blue).
-        // Arrow points to top.
+        
+        // Bereken welk segment bovenaan staat (0 graden)
+        // Elk segment is 72 graden (360 / 5)
         const index = Math.floor(((360 - realRotation) % 360) / 72);
         
         const winningId = legendIds[index];
@@ -313,9 +364,9 @@ function spinWheel() {
     }, 4000);
 }
 
-// --- TIMER (VISUAL BAR) ---
+// --- TIMER FUNCTIES ---
 let timerInterval;
-const MAX_TIME = 30; // Seconds
+const MAX_TIME = 30;
 
 function startTimer() {
     clearInterval(timerInterval);
@@ -324,7 +375,7 @@ function startTimer() {
     
     let timeLeft = MAX_TIME;
     
-    // Reset UI
+    // Reset startstaat
     display.textContent = timeLeft;
     display.style.color = '#fff';
     bar.style.width = '100%';
@@ -334,17 +385,17 @@ function startTimer() {
         timeLeft--;
         display.textContent = timeLeft;
         
-        // Update Bar Width
+        // Update breedte van de balk
         const percentage = (timeLeft / MAX_TIME) * 100;
         bar.style.width = `${percentage}%`;
 
-        // Change colors based on urgency
+        // Kleuren veranderen als de tijd bijna op is
         if (timeLeft <= 10) {
-            display.style.color = 'var(--c-gold)';
+            display.style.color = 'var(--c-gold)'; // Geel/Goud
             bar.style.backgroundColor = 'var(--c-gold)';
         }
         if (timeLeft <= 5) {
-            display.style.color = 'var(--c-pink)'; // Alarm color
+            display.style.color = 'var(--c-pink)'; // Rood/Roze
             bar.style.backgroundColor = 'var(--c-pink)';
         }
 
