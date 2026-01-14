@@ -271,82 +271,6 @@ button:active { transform: scale(0.98); }
     border-left: 5px solid white;
 }
 
-/* ===============================
-   MOBIEL & TABLET OVERRIDES
-   =============================== */
-
-@media (max-width: 768px) {
-
-    body {
-        height: auto;
-        overflow-y: auto;
-    }
-
-    /* Grid wordt kolom */
-    .main-grid {
-        display: flex;
-        flex-direction: column;
-        height: auto;
-        padding-top: 240px; /* ruimte voor het wiel */
-    }
-
-    /* Wiel wordt top-element, niet overlay */
-    .wheel-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 220px;
-        align-items: flex-end;
-        background: linear-gradient(
-            to bottom,
-            var(--bg-color) 70%,
-            transparent 100%
-        );
-        z-index: 50;
-        pointer-events: none;
-    }
-
-    .wheel-wrapper {
-        width: 220px;
-        height: 220px;
-        pointer-events: auto;
-    }
-
-    /* Cards mogen niet over wiel heen */
-    .card {
-        z-index: 1;
-    }
-
-    /* Typografie opschalen voor mobiel */
-    h2 {
-        font-size: 1rem;
-    }
-
-    .info-value {
-        font-size: 1.2rem;
-    }
-
-    #timer-display {
-        font-size: 2.2rem;
-    }
-
-    /* Knoppen mobiel vriendelijk */
-    .btn-dj {
-        padding: 14px;
-    }
-
-    .btn-dj .icon {
-        font-size: 1.6rem;
-    }
-
-    .btn-dj .label {
-        font-size: 0.75rem;
-    }
-
-    .primary-action {
-        font-size: 1rem;
-    }
-}
 
 /* ===============================
    TOUCH TARGETS
@@ -356,5 +280,80 @@ button:active { transform: scale(0.98); }
     button,
     select {
         min-height: 44px;
+    }
+}
+/* ===============================
+   MOBILE: SELFDE LAYOUT, KLEINER
+   =============================== */
+
+@media (max-width: 768px) {
+
+    body {
+        overflow: hidden;
+    }
+
+    .main-grid {
+        gap: 8px;
+        padding: 8px;
+    }
+
+    /* Cards compacter */
+    .card {
+        padding: 10px;
+    }
+
+    h2 {
+        font-size: 0.95rem;
+        padding-bottom: 5px;
+        margin-bottom: 6px;
+    }
+
+    /* Wiel kleiner maar zelfde plek */
+    .wheel-wrapper {
+        width: 220px;
+        height: 220px;
+        transform: scale(0.9);
+    }
+
+    .wheel-center-cap {
+        width: 55px;
+        height: 55px;
+        font-size: 1rem;
+    }
+
+    .arrow {
+        font-size: 45px;
+        top: -28px;
+    }
+
+    /* Knoppen compacter */
+    .btn-dj {
+        padding: 8px;
+    }
+
+    .btn-dj .icon {
+        font-size: 1.5rem;
+    }
+
+    .btn-dj .label {
+        font-size: 0.7rem;
+    }
+
+    .primary-action {
+        font-size: 0.95rem;
+    }
+
+    /* Info kleiner */
+    .info-label {
+        font-size: 0.85rem;
+    }
+
+    .info-value {
+        font-size: 1.1rem;
+    }
+
+    /* Timer */
+    #timer-display {
+        font-size: 2rem;
     }
 }
