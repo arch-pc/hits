@@ -357,3 +357,15 @@ button:active { transform: scale(0.98); }
         font-size: 2rem;
     }
 }
+
+@media (max-width: 768px) {
+    .wheel-overlay {
+        z-index: 9999 !important;
+        outline: 3px solid red;
+    }
+
+    .card {
+        z-index: 1 !important;
+    }
+}
+
