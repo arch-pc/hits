@@ -53,11 +53,13 @@ body {
 /* --- MAIN GRID LAYOUT (2x2) --- */
 .main-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* 2 kolommen */
-    grid-template-rows: 1fr 1fr;    /* 2 rijen */
+    /* Creëert 3 kolommen op desktop, de middelste is voor het wiel */
+    grid-template-columns: 1fr 340px 1fr; 
+    grid-template-rows: 1fr 1fr;
     gap: 15px;
     height: 100vh;
     padding: 15px;
+    align-items: stretch;
 }
 
 /* Algemene Card Stijl */
@@ -91,24 +93,29 @@ button:active { transform: scale(0.98); }
 .btn-spotify { background-color: var(--spotify-green); color: white; padding: 15px 30px; border-radius: 25px; font-weight: bold; font-size: 1rem; }
 .btn-warning { background-color: #ff9800; color: white; border-radius: 5px; }
 
-/* --- WIEL OVERLAY (CENTRAAL) --- */
+/* --- WIEL OVERLAY (NU ONDERDEEL VAN DE GRID) --- */
 .wheel-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    display: flex; justify-content: center; align-items: center;
-    z-index: 100; /* Boven de kaarten */
-    pointer-events: none; /* Kliks gaan door de lege ruimte heen */
+    /* Niet langer fixed, maar neemt de centrale plek in */
+    grid-column: 2;
+    grid-row: 1 / span 2; /* Beslaat beide rijen in het midden */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    position: relative; /* Voor de pijl positionering */
 }
 
 .wheel-wrapper {
-    width: 320px; /* Iets groter wiel */
-    height: 320px;
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1 / 1; /* Houdt het wiel altijd rond */
     position: relative;
     cursor: pointer;
-    pointer-events: auto; /* Het wiel zelf is WEL klikbaar */
     filter: drop-shadow(0 0 25px rgba(0,0,0,0.8));
     transition: transform 0.2s;
 }
+
 .wheel-wrapper:active { transform: scale(0.95); }
 
 .wheel {
@@ -137,9 +144,12 @@ button:active { transform: scale(0.98); }
 }
 
 .arrow {
-    position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
-    font-size: 60px; color: white; 
-    z-index: 101; 
+    position: absolute;
+    top: -20px; /* Iets lager zodat hij niet van het scherm valt */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 40px; /* Iets kleiner voor betere fit */
+    z-index: 101;
     text-shadow: 0 4px 8px rgba(0,0,0,0.8);
     pointer-events: none;
 }
@@ -269,4 +279,48 @@ button:active { transform: scale(0.98); }
     transform: scale(1.05);
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     border-left: 5px solid white;
+}
+
+/* TABLET / IPAD PORTRAIT */
+@media (max-width: 1024px) {
+    .main-grid {
+        grid-template-columns: 1fr 1fr; /* Terug naar 2 kolommen */
+        grid-template-rows: auto auto auto; /* Extra rij voor het wiel */
+    }
+
+    .wheel-overlay {
+        grid-column: 1 / span 2; /* Wiel over de hele breedte */
+        grid-row: 2; /* Wiel in de middelste rij */
+        margin: 20px 0;
+    }
+    
+    .wheel-wrapper {
+        max-width: 250px; /* Iets kleiner op tablets */
+    }
+}
+
+/* MOBIEL (Smartphone) */
+@media (max-width: 600px) {
+    body {
+        overflow-y: auto; /* Toestaan van scrollen op kleine schermen indien nodig */
+    }
+
+    .main-grid {
+        display: flex;
+        flex-direction: column; /* Alles onder elkaar */
+        height: auto;
+    }
+
+    .wheel-overlay {
+        order: -1; /* Wiel bovenaan zetten op mobiel, of gebruik 2 voor in het midden */
+        height: 300px;
+    }
+
+    .card {
+        min-height: 200px;
+    }
+
+    #timer-display {
+        font-size: 2rem;
+    }
 }
