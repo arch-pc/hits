@@ -12,9 +12,10 @@
     --c-gold:   #FFB000;
 }
 
-* { 
-    box-sizing: border-box; 
-    margin: 0; padding: 0; 
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
@@ -23,23 +24,23 @@ body {
     background-color: var(--bg-color);
     color: var(--text-main);
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    height: 100vh;
     width: 100vw;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
-/* TEST MODUS: Forceer zichtbaarheid van de app */
+/* TEST MODUS */
 #login-section { display: none !important; }
 #app-section.hidden { display: block !important; }
 
+/* =========================
+   MOBILE FIRST LAYOUT
+   ========================= */
+
 .main-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; 
-    grid-template-rows: 1fr 1fr;
-    gap: 15px;
-    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     padding: 15px;
-    position: relative;
 }
 
 .card {
@@ -50,7 +51,6 @@ body {
     flex-direction: column;
     align-items: center;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    z-index: 1;
 }
 
 h2 {
@@ -63,108 +63,166 @@ h2 {
     text-align: center;
 }
 
-/* --- HET WIEL (Zwevend in het midden) --- */
+/* =========================
+   WIEL – MOBIEL
+   ========================= */
+
 .wheel-overlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 100;
-    pointer-events: none; /* Laat klikken door naar de kaarten */
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
 }
 
 .wheel-wrapper {
-    width: 280px;
-    height: 280px;
+    width: 180px;
+    height: 180px;
     position: relative;
     cursor: pointer;
-    pointer-events: auto; /* Wiel zelf is wel klikbaar */
     filter: drop-shadow(0 0 20px rgba(0,0,0,0.8));
 }
 
 .wheel {
-    width: 100%; height: 100%;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     border: 6px solid white;
     background: conic-gradient(
-        var(--c-blue) 0% 20%, 
-        var(--c-purple) 20% 40%, 
-        var(--c-pink) 40% 60%, 
-        var(--c-orange) 60% 80%, 
+        var(--c-blue) 0% 20%,
+        var(--c-purple) 20% 40%,
+        var(--c-pink) 40% 60%,
+        var(--c-orange) 60% 80%,
         var(--c-gold) 80% 100%
     );
 }
 
 .wheel-center-cap {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    background: white; color: #333;
-    width: 60px; height: 60px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    color: #333;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 900;
 }
 
 .arrow {
-    position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
-    font-size: 50px; color: white;
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 50px;
+    color: white;
 }
 
-/* Knoppen & Info styling */
-button { cursor: pointer; border: none; font-family: inherit; }
-.btn-spotify { background-color: var(--spotify-green); color: white; padding: 12px 24px; border-radius: 20px; font-weight: bold; }
-.dj-controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-top: auto; }
-.btn-dj { border-radius: 8px; color: white; padding: 10px; font-weight: bold; }
-.primary-action { grid-column: span 2; background-color: var(--accent-blue); }
-.secondary-action { background-color: #333; }
-.info-row { width: 100%; border-bottom: 1px solid #333; padding: 5px 0; }
-.info-value { color: var(--spotify-green); font-size: 1.2rem; font-weight: bold; }
-/* --- TABLET / SMALL LAPTOP --- */
-@media (max-width: 1024px) {
-    .wheel-wrapper {
-        width: 220px;
-        height: 220px;
+/* =========================
+   UI ELEMENTEN
+   ========================= */
+
+button {
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+}
+
+.btn-spotify {
+    background-color: var(--spotify-green);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.dj-controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    margin-top: auto;
+}
+
+.btn-dj {
+    border-radius: 8px;
+    color: white;
+    padding: 12px;
+    font-weight: bold;
+}
+
+.primary-action {
+    grid-column: span 2;
+    background-color: var(--accent-blue);
+}
+
+.secondary-action {
+    background-color: #333;
+}
+
+.info-row {
+    width: 100%;
+    border-bottom: 1px solid #333;
+    padding: 5px 0;
+}
+
+.info-value {
+    color: var(--spotify-green);
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* =========================
+   TABLET & DESKTOP
+   ========================= */
+
+@media (min-width: 768px) {
+    body {
+        overflow: hidden;
     }
-    .info-value { font-size: 1rem; }
-}
-
-/* --- SMARTPHONE --- */
-@media (max-width: 600px) {
-    body { overflow-y: auto; }
 
     .main-grid {
-        display: flex;
-        flex-direction: column;
-        height: auto;
-        padding-top: 260px; /* Ruimte voor het wiel bovenaan */
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 15px;
+        height: 100vh;
+        position: relative;
     }
 
     .wheel-overlay {
-        position: fixed;
-        top: 130px;
-        background: var(--bg-color);
-        width: 100%;
-        height: 250px;
-        display: flex;
-        justify-content: center;
-        box-shadow: 0 10px 20px var(--bg-color);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        pointer-events: none;
     }
 
     .wheel-wrapper {
-        width: 180px;
-        height: 180px;
+        width: 280px;
+        height: 280px;
+        pointer-events: auto;
     }
-
-    .card {
-        margin-bottom: 10px;
-        min-height: 160px;
-    }
-
-    #timer-display { font-size: 1.8rem; }
 }
 
-/* TOUCH TARGETS */
+@media (min-width: 1024px) {
+    .wheel-wrapper {
+        width: 300px;
+        height: 300px;
+    }
+}
+
+/* =========================
+   TOUCH TARGETS
+   ========================= */
+
 @media (pointer: coarse) {
-    .btn-dj, #start-timer-btn, select {
+    .btn-dj,
+    .btn-spotify,
+    select {
         min-height: 44px;
     }
 }
