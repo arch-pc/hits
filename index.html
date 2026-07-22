@@ -2,95 +2,150 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0b0b0f">
+    <meta
+        http-equiv="Content-Security-Policy"
+        content="default-src 'self'; connect-src 'self' https://accounts.spotify.com https://api.spotify.com; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data: https:;"
+    >
 
     <title>Music Bingo</title>
     <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
 </head>
 <body>
+    <main id="login-section" class="login-screen">
+        <section class="login-card" aria-labelledby="login-title">
+            <div class="brand-mark" aria-hidden="true">♫</div>
+            <p class="eyebrow">Music Bingo</p>
+            <h1 id="login-title">Ready to play?</h1>
+            <p class="login-copy">
+                Log in with Spotify Premium, open Spotify on a phone or computer,
+                and use this screen to run the game.
+            </p>
+            <button id="login-btn" class="btn btn-spotify" type="button">
+                Log in with Spotify
+            </button>
+            <p id="login-message" class="inline-message" role="alert" aria-live="polite"></p>
+            <p class="login-note">Playback requires an available Spotify Connect device.</p>
+        </section>
+    </main>
 
-    <div id="login-section">
-        <h1>Music Bingo Login</h1>
-        <p>Please log in with Spotify Premium to enable playback.</p>
-        <button id="login-btn" class="btn-spotify">Log in with Spotify</button>
-    </div>
+    <div id="app-section" class="app-shell hidden">
+        <header class="app-header">
+            <div>
+                <p class="eyebrow">Music Bingo</p>
+                <h1>Game control</h1>
+            </div>
+            <div class="header-actions">
+                <span class="connection-pill"><span aria-hidden="true"></span> Spotify connected</span>
+                <button id="logout-btn" class="btn btn-ghost" type="button">Log out</button>
+            </div>
+        </header>
 
-    <div class="wheel-overlay">
-        <div class="wheel-wrapper clickable" id="wheel-click-area">
-            <div id="wheel" class="wheel">
+        <main class="dashboard">
+            <section class="card area-dj" aria-labelledby="dj-title">
+                <div class="card-heading">
+                    <div>
+                        <p class="card-kicker">Playback</p>
+                        <h2 id="dj-title">DJ Booth</h2>
+                    </div>
+                    <span id="queue-status" class="card-meta">Loading songs…</span>
                 </div>
-            <div class="wheel-center-cap">SPIN</div>
-            <div class="arrow">⬇</div>
-        </div>
-    </div>
 
-    <div id="app-section" class="hidden">
-        <div class="main-grid">
-
-            <div class="card area-dj">
-                <h2>🎛️ DJ Booth</h2>
-                
-                <div class="playlist-wrapper">
-                    <select id="playlist-select"></select>
-                </div>
+                <label class="field-label" for="playlist-select">Playlist</label>
+                <select id="playlist-select" aria-describedby="library-status"></select>
+                <p id="library-status" class="field-help" aria-live="polite"></p>
 
                 <div class="dj-controls-grid">
-                    <button id="btn-next" class="btn-dj primary-action">
-                        <span class="icon">🎲</span>
-                        <span class="label">Next Song</span>
+                    <button id="btn-next" class="btn btn-dj primary-action" type="button">
+                        <span class="icon" aria-hidden="true">🎲</span>
+                        <span>Next song</span>
                     </button>
-                    
-                    <button id="btn-pause" class="btn-dj secondary-action">
-                        <span class="icon">⏯</span>
-                        <span class="label">Pause / Play</span>
+
+                    <button id="btn-pause" class="btn btn-dj secondary-action" type="button">
+                        <span class="icon" aria-hidden="true">⏯</span>
+                        <span>Pause / play</span>
                     </button>
-                    
-                    <button id="btn-restart" class="btn-dj secondary-action">
-                        <span class="icon">⏮</span>
-                        <span class="label">Restart</span>
+
+                    <button id="btn-restart" class="btn btn-dj secondary-action" type="button">
+                        <span class="icon" aria-hidden="true">⏮</span>
+                        <span>Restart</span>
                     </button>
                 </div>
-            </div>
+            </section>
 
-            <div class="card area-info">
-                <h2>🎵 Now Playing</h2>
-                
-                <div class="info-grid">
-                    <div class="info-row">
-                        <span class="info-label">Artist:</span>
-                        <span id="val-artist" class="info-value">???</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Title:</span>
-                        <span id="val-title" class="info-value">???</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Year:</span>
-                        <span id="val-year" class="info-value">???</span>
+            <section class="card area-info" aria-labelledby="info-title">
+                <div class="card-heading">
+                    <div>
+                        <p class="card-kicker">Current round</p>
+                        <h2 id="info-title">Now Playing</h2>
                     </div>
                 </div>
 
-                <button id="reveal-btn" class="btn-warning large-reveal">REVEAL ANSWER</button>
-            </div>
+                <dl class="info-grid">
+                    <div class="info-row">
+                        <dt>Artist</dt>
+                        <dd id="val-artist" class="info-value">???</dd>
+                    </div>
+                    <div class="info-row">
+                        <dt>Title</dt>
+                        <dd id="val-title" class="info-value">???</dd>
+                    </div>
+                    <div class="info-row">
+                        <dt>Year</dt>
+                        <dd id="val-year" class="info-value">???</dd>
+                    </div>
+                </dl>
 
-            <div class="card area-timer">
-                <h2>⏳ Timer</h2>
-                
-                <div class="timer-visual-container">
+                <button id="reveal-btn" class="btn btn-warning large-reveal" type="button">
+                    Reveal answer
+                </button>
+            </section>
+
+            <section class="card area-wheel" aria-labelledby="wheel-title">
+                <div class="card-heading wheel-heading">
+                    <div>
+                        <p class="card-kicker">Bonus task</p>
+                        <h2 id="wheel-title">Spin the wheel</h2>
+                    </div>
+                </div>
+
+                <div class="wheel-stage">
+                    <button id="wheel-click-area" class="wheel-wrapper" type="button" aria-label="Spin the task wheel">
+                        <span class="wheel-pointer" aria-hidden="true"></span>
+                        <span id="wheel" class="wheel" aria-hidden="true"></span>
+                        <span class="wheel-center-cap">SPIN</span>
+                    </button>
+                </div>
+
+                <p id="wheel-result" class="wheel-result" aria-live="polite">Tap the wheel to choose a task.</p>
+            </section>
+
+            <section class="card area-timer" aria-labelledby="timer-title">
+                <div class="card-heading">
+                    <div>
+                        <p class="card-kicker">Countdown</p>
+                        <h2 id="timer-title">Timer</h2>
+                    </div>
+                    <span id="timer-display" class="timer-display" aria-live="polite">30</span>
+                </div>
+
+                <div class="timer-visual-container" aria-hidden="true">
                     <div id="timer-bar" class="timer-bar"></div>
                 </div>
-                
-                <div class="timer-controls">
-                    <span id="timer-display">30</span>
-                    <button id="start-timer-btn">▶ START</button>
-                </div>
-            </div>
 
-            <div class="card area-legend">
-                <h2>📋 Tasks</h2>
+                <button id="start-timer-btn" class="btn btn-light timer-button" type="button">▶ Start 30 seconds</button>
+            </section>
+
+            <section class="card area-legend" aria-labelledby="tasks-title">
+                <div class="card-heading">
+                    <div>
+                        <p class="card-kicker">Wheel options</p>
+                        <h2 id="tasks-title">Tasks</h2>
+                    </div>
+                </div>
+
                 <div class="legend-list">
                     <div class="legend-item" id="leg-color1">
                         <span class="dot" style="background: var(--c-blue);"></span>
@@ -102,7 +157,7 @@
                     </div>
                     <div class="legend-item" id="leg-color3">
                         <span class="dot" style="background: var(--c-pink);"></span>
-                        <span class="task-text">Guess exact year</span>
+                        <span class="task-text">Guess the exact year</span>
                     </div>
                     <div class="legend-item" id="leg-color4">
                         <span class="dot" style="background: var(--c-orange);"></span>
@@ -110,14 +165,13 @@
                     </div>
                     <div class="legend-item" id="leg-color5">
                         <span class="dot" style="background: var(--c-gold);"></span>
-                        <span class="task-text">Exact year (+- 3 yrs)</span>
+                        <span class="task-text">Exact year, within 3 years</span>
                     </div>
                 </div>
-            </div>
-
-        </div>
+            </section>
+        </main>
     </div>
 
-    <script src="script.js"></script>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
