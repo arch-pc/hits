@@ -423,14 +423,28 @@ async function fetchWebApi(endpoint, method = 'GET', body, allowRetry = true) {
         throw new Error('You are not logged in to Spotify.');
     }
 
-    const response = await fetch(`https://api.spotify.com/${endpoint}`, {
-        method,
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-        },
-        body: body ? JSON.stringify(body) : undefined
-    });
+    const headers = {
+        Authorization: `Bearer ${accessToken}`
+    };
+
+    if (body !== undefined) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    let response;
+    try {
+        response = await fetch(`https://api.spotify.com/${endpoint}`, {
+            method,
+            headers,
+            credentials: 'omit',
+            body: body !== undefined ? JSON.stringify(body) : undefined
+        });
+    } catch (error) {
+        console.error('Spotify network request failed:', { endpoint, method, error });
+        throw new Error(
+            'Spotify could not be reached. Disable browser shields, content blockers or VPN for this site and try again.'
+        );
+    }
 
     if (response.status === 401 && allowRetry && sessionStorage.getItem(STORAGE_KEYS.refreshToken)) {
         await refreshAccessToken();
