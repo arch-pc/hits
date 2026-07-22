@@ -1,6 +1,7 @@
 // Spotify application configuration.
 const CLIENT_ID = 'a7f4c18653c549a99780219bf348a83c';
 const PRODUCTION_REDIRECT_URI = 'https://arch-pc.github.io/hits/index.html';
+const SPOTIFY_PROXY_URL = 'https://music-bingo-spotify-proxy.yellow-pine-c59f.workers.dev';
 const REDIRECT_URI = window.location.hostname === 'arch-pc.github.io'
     ? PRODUCTION_REDIRECT_URI
     : `${window.location.origin}${window.location.pathname}`;
@@ -433,7 +434,7 @@ async function fetchWebApi(endpoint, method = 'GET', body, allowRetry = true) {
 
     let response;
     try {
-        response = await fetch(`https://api.spotify.com/${endpoint}`, {
+        response = await fetch(`${SPOTIFY_PROXY_URL}/${endpoint}`, {
             method,
             headers,
             credentials: 'omit',
