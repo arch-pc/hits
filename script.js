@@ -17,6 +17,9 @@ const STORAGE_KEYS = {
 
 const MAX_TIME = 30;
 const ALL_PLAYLISTS_VALUE = '__all_playlists__';
+const MAX_PLAYBACK_SKIPS = 10;
+const PLAYBACK_CHECK_ATTEMPTS = 4;
+const PLAYBACK_CHECK_DELAY = 400;
 const legendIds = ['leg-color1', 'leg-color2', 'leg-color3', 'leg-color4', 'leg-color5'];
 const taskLabels = [
     'Name the artist',
@@ -558,6 +561,50 @@ async function fetchWebApi(endpoint, method = 'GET', body, allowRetry = true) {
     return response;
 }
 
+function wait(milliseconds) {
+    return new Promise(resolve => window.setTimeout(resolve, milliseconds));
+}
+
+function canSkipPlaybackError(response, payload) {
+    const reason = String(payload?.error?.reason || '').toUpperCase();
+    const message = String(payload?.error?.message || '').toLowerCase();
+    if (reason === 'PREMIUM_REQUIRED' || message.includes('premium')) {
+        return false;
+    }
+    if (message.includes('device')) {
+        return false;
+    }
+    return response.status === 404
+        || reason === 'RESTRICTION_VIOLATED'
+        || message.includes('restriction')
+        || message.includes('not available');
+}
+
+async function confirmTrackStarted(track) {
+    const requestedId = extractSpotifyTrackId(track.uri);
+
+    for (let attempt = 0; attempt < PLAYBACK_CHECK_ATTEMPTS; attempt += 1) {
+        await wait(PLAYBACK_CHECK_DELAY);
+        const stateResponse = await fetchWebApi('v1/me/player');
+        if (stateResponse.status === 204) {
+            continue;
+        }
+        if (!stateResponse.ok) {
+            const error = await readJsonResponse(stateResponse);
+            throw new Error(getSpotifyError(error, 'Could not verify Spotify playback.'));
+        }
+
+        const state = await stateResponse.json();
+        const activeId = state.item?.id;
+        const originalId = state.item?.linked_from?.id;
+        if (state.is_playing && (activeId === requestedId || originalId === requestedId)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 async function playNextInQueue() {
     const button = document.getElementById('btn-next');
 
@@ -574,7 +621,6 @@ async function playNextInQueue() {
     }
 
     setButtonBusy(button, true, 'Connecting…');
-    const nextTrack = shuffledQueue[queueIndex];
 
     try {
         const devicesResponse = await fetchWebApi('v1/me/player/devices');
@@ -593,22 +639,49 @@ async function playNextInQueue() {
             throw new Error('No available Spotify device found. Open Spotify and play something once, then try again.');
         }
 
-        const playResponse = await fetchWebApi(
-            `v1/me/player/play?device_id=${encodeURIComponent(device.id)}`,
-            'PUT',
-            { uris: [nextTrack.uri] }
-        );
+        let skipped = 0;
+        while (queueIndex < shuffledQueue.length && skipped < MAX_PLAYBACK_SKIPS) {
+            const candidate = shuffledQueue[queueIndex];
+            const playResponse = await fetchWebApi(
+                `v1/me/player/play?device_id=${encodeURIComponent(device.id)}`,
+                'PUT',
+                { uris: [candidate.uri] }
+            );
 
-        if (!playResponse.ok) {
-            const playError = await readJsonResponse(playResponse);
-            throw new Error(getSpotifyError(playError, 'Spotify could not start this song.'));
+            if (!playResponse.ok) {
+                const playError = await readJsonResponse(playResponse);
+                if (!canSkipPlaybackError(playResponse, playError)) {
+                    throw new Error(getSpotifyError(playError, 'Spotify could not start this song.'));
+                }
+                console.warn('Skipping an unavailable Spotify track:', candidate, playError);
+                queueIndex += 1;
+                skipped += 1;
+                updateQueueStatus();
+                continue;
+            }
+
+            if (!await confirmTrackStarted(candidate)) {
+                console.warn('Spotify accepted the play request but did not start the track:', candidate);
+                queueIndex += 1;
+                skipped += 1;
+                updateQueueStatus();
+                continue;
+            }
+
+            currentTrack = candidate;
+            queueIndex += 1;
+            resetTrackInfo();
+            updateQueueStatus();
+            const skippedText = skipped > 0 ? ` Skipped ${skipped} unavailable song${skipped === 1 ? '' : 's'}.` : '';
+            showToast(`Now playing on ${device.name || 'your Spotify device'}.${skippedText}`);
+            return;
         }
 
-        currentTrack = nextTrack;
-        queueIndex += 1;
-        resetTrackInfo();
-        updateQueueStatus();
-        showToast(`Now playing on ${device.name || 'your Spotify device'}.`);
+        throw new Error(
+            queueIndex >= shuffledQueue.length
+                ? 'No playable songs remain in this playlist.'
+                : `Spotify could not start ${MAX_PLAYBACK_SKIPS} songs. Try another playlist or device.`
+        );
     } catch (error) {
         console.error('Playback error:', error);
         showToast(error.message, true);
