@@ -586,15 +586,15 @@ async function playNextInQueue() {
         const availableDevices = Array.isArray(devicesData.devices)
             ? devicesData.devices.filter(device => !device.is_restricted)
             : [];
-        const device = availableDevices.find(item => item.is_active) || availableDevices[0];
+        const device = availableDevices.find(item => item.is_active);
 
         if (!device) {
-            throw new Error('No available Spotify device found. Open Spotify and play something once, then try again.');
+            throw new Error('No active Spotify device found. Start a song on the device you want to use, then try again.');
         }
 
         const nextTrack = shuffledQueue[queueIndex];
         const playResponse = await fetchWebApi(
-            `v1/me/player/play?device_id=${encodeURIComponent(device.id)}`,
+            'v1/me/player/play',
             'PUT',
             { uris: [nextTrack.uri] }
         );
