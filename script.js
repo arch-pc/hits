@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
 };
 
 const MAX_TIME = 30;
+const ALL_PLAYLISTS_VALUE = '__all_playlists__';
 const legendIds = ['leg-color1', 'leg-color2', 'leg-color3', 'leg-color4', 'leg-color5'];
 const taskLabels = [
     'Name the artist',
@@ -287,12 +288,19 @@ async function loadLibrary() {
         const select = document.getElementById('playlist-select');
         select.replaceChildren();
 
+        const allTracks = getAllPlaylistTracks();
+        select.add(new Option(
+            `All playlists mixed (${allTracks.length} ${allTracks.length === 1 ? 'song' : 'songs'})`,
+            ALL_PLAYLISTS_VALUE
+        ));
+
         playlistNames.forEach(name => {
             const songCount = fullLibrary[name].length;
             select.add(new Option(`${name} (${songCount} ${songCount === 1 ? 'song' : 'songs'})`, name));
         });
 
         select.onchange = event => setupQueue(event.target.value);
+        select.value = playlistNames[0];
         setupQueue(playlistNames[0]);
 
         const skippedText = normalised.skipped > 0
@@ -310,12 +318,19 @@ async function loadLibrary() {
 }
 
 function normaliseLibrary(rawData) {
-    const source = Array.isArray(rawData) ? { 'Music Bingo': rawData } : rawData;
-
-    if (!source || typeof source !== 'object') {
-        throw new Error('The root of data.json must be an object containing playlist arrays.');
+    if (!rawData || typeof rawData !== 'object') {
+        throw new Error('The root of data.json must be an object.');
     }
 
+    const usesTrackReferences = !Array.isArray(rawData)
+        && (Object.prototype.hasOwnProperty.call(rawData, 'tracks')
+            || Object.prototype.hasOwnProperty.call(rawData, 'playlists'));
+
+    if (usesTrackReferences) {
+        return normaliseReferencedLibrary(rawData);
+    }
+
+    const source = Array.isArray(rawData) ? { 'Music Bingo': rawData } : rawData;
     const library = {};
     let skipped = 0;
 
@@ -330,6 +345,66 @@ function normaliseLibrary(rawData) {
             const normalisedTrack = normaliseTrack(track);
             if (normalisedTrack) {
                 validTracks.push(normalisedTrack);
+            } else {
+                skipped += 1;
+            }
+        }
+
+        if (validTracks.length > 0) {
+            library[String(playlistName).trim() || 'Untitled playlist'] = validTracks;
+        }
+    }
+
+    return { library, skipped };
+}
+
+function normaliseReferencedLibrary(rawData) {
+    const { tracks, playlists } = rawData;
+
+    if (!tracks || typeof tracks !== 'object' || Array.isArray(tracks)) {
+        throw new Error('data.json must contain a tracks object.');
+    }
+
+    if (!playlists || typeof playlists !== 'object' || Array.isArray(playlists)) {
+        throw new Error('data.json must contain a playlists object.');
+    }
+
+    const tracksById = {};
+    const library = {};
+    let skipped = 0;
+
+    for (const [storedId, value] of Object.entries(tracks)) {
+        const track = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+        const trackId = extractSpotifyTrackId(storedId)
+            || extractSpotifyTrackId(track.uri)
+            || extractSpotifyTrackId(track.link);
+        const normalisedTrack = normaliseTrack({
+            ...track,
+            uri: trackId ? `spotify:track:${trackId}` : '',
+            link: track.link || (trackId ? `https://open.spotify.com/track/${trackId}` : '')
+        });
+
+        if (!trackId || !normalisedTrack) {
+            skipped += 1;
+            continue;
+        }
+
+        tracksById[trackId] = normalisedTrack;
+    }
+
+    for (const [playlistName, trackReferences] of Object.entries(playlists)) {
+        if (!Array.isArray(trackReferences)) {
+            skipped += 1;
+            continue;
+        }
+
+        const validTracks = [];
+        for (const reference of trackReferences) {
+            const trackId = extractSpotifyTrackId(reference);
+            const track = tracksById[trackId];
+
+            if (track) {
+                validTracks.push(track);
             } else {
                 skipped += 1;
             }
@@ -373,15 +448,20 @@ function normaliseTrack(track) {
     };
 }
 
-function extractSpotifyTrackId(link) {
-    if (!link) return '';
+function extractSpotifyTrackId(value) {
+    if (!value) return '';
+
+    const text = String(value).trim();
+    const uriMatch = text.match(/^spotify:track:([A-Za-z0-9]{22})$/);
+    if (uriMatch) return uriMatch[1];
+    if (/^[A-Za-z0-9]{22}$/.test(text)) return text;
 
     try {
-        const url = new URL(link);
-        const match = url.pathname.match(/\/track\/([A-Za-z0-9]+)/);
+        const url = new URL(text);
+        const match = url.pathname.match(/\/track\/([A-Za-z0-9]{22})/);
         return match ? match[1] : '';
     } catch {
-        const match = link.match(/open\.spotify\.com\/track\/([A-Za-z0-9]+)/);
+        const match = text.match(/open\.spotify\.com\/track\/([A-Za-z0-9]{22})/);
         return match ? match[1] : '';
     }
 }
@@ -394,8 +474,26 @@ function shuffleArray(array) {
     return array;
 }
 
+function getAllPlaylistTracks() {
+    const tracks = [];
+    const seenUris = new Set();
+
+    for (const playlistTracks of Object.values(fullLibrary)) {
+        for (const track of playlistTracks) {
+            if (!seenUris.has(track.uri)) {
+                seenUris.add(track.uri);
+                tracks.push(track);
+            }
+        }
+    }
+
+    return tracks;
+}
+
 function setupQueue(playlistName) {
-    const tracks = fullLibrary[playlistName];
+    const tracks = playlistName === ALL_PLAYLISTS_VALUE
+        ? getAllPlaylistTracks()
+        : fullLibrary[playlistName];
     if (!Array.isArray(tracks) || tracks.length === 0) {
         shuffledQueue = [];
         updateQueueStatus();
